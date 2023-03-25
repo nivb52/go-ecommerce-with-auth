@@ -1,3 +1,12 @@
 {
-    "git-blame.gitWebUrl": ""
+    "[go]": {
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": true
+        },
+        "editor.defaultFormatter": "golang.go"
+    },
+    "go.autocompleteUnimportedPackages": true,
+    "go.lintOnSave": "file",
+    "go.formatTool": "gofmt",
 }
