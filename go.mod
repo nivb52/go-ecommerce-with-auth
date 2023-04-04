@@ -1,5 +1,5 @@
-module github.com/nivb52/go-ecommerce-with-auth
+module go-ecommerce-with-auth
 
-go 1.19
+go 1.20
 
 require github.com/go-chi/chi/v5 v5.0.8 // indirect
