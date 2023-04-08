@@ -7,5 +7,7 @@ func (app *application) HelloWorld(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) VirtualTerminal(w http.ResponseWriter, r *http.Request) {
-	app.infoLog.Println("Hit VirtualTerminal Handler")
+	if err := app.renderTemplate(w, r, "terminal", nil); err != nil {
+		app.errorLog.Println(err)
+	}
 }
