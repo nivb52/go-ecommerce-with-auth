@@ -93,7 +93,10 @@ func (app *application) parseTemplate(
 	} else {
 		t, err = template.New(fmt.Sprintf("%s.page.gohtml", page)).
 			Funcs(functions).
-			ParseFS(templateFS, "templates/base.layout.gohtml", templateToRender)
+			ParseFS(templateFS,
+				"templates/base.layout.gohtml",
+				templateToRender,
+			)
 	}
 
 	if err != nil {
