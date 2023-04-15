@@ -9,4 +9,5 @@
     "go.autocompleteUnimportedPackages": true,
     "go.lintOnSave": "file",
     "go.formatTool": "gofmt",
+    "git-blame.gitWebUrl": "",
 }
