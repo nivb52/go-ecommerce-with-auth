@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	_ "github.com/joho/godotenv/autoload"
 )
 
 const version = "1.0.0"
@@ -69,6 +71,6 @@ func main() {
 	err := app.serve()
 	if err != nil {
 		app.errorLog.Println(err)
-		log.Fatal("exiting")
+		log.Fatal("exiting API")
 	}
 }
