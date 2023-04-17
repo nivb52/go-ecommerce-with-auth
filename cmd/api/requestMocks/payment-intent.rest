@@ -1,0 +1,56 @@
+@host = localhost:4001
+
+// Create Payment
+Intent POST http://{{host}}/api/payment-intent/ HTTP/1.1
+content-type: application/json
+    
+{
+    "currency": "USD",
+    "amount": "150"
+}
+###
+
+// Create Payment Intent -> too large amount - ment to failed
+POST http://{{host}}/api/payment-intent/ HTTP/1.1
+content-type: application/json
+    
+{
+    "currency": "USD",
+    "amount": "15000000000000"
+}
+
+###
+
+###
+
+// Create Payment Intent -> too small amount - ment to failed
+POST http://{{host}}/api/payment-intent/ HTTP/1.1
+content-type: application/json
+    
+{
+    "currency": "USD",
+    "amount": "15"
+}
+
+###
+
+// Create Payment Intent -> negative amount - ment to failed
+POST http://{{host}}/api/payment-intent/ HTTP/1.1
+content-type: application/json
+    
+{
+    "currency": "USD",
+    "amount": "-150"
+}
+
+###
+
+// Create Payment Intent -> wrong currency - ment to failed
+POST http://{{host}}/api/payment-intent/ HTTP/1.1
+content-type: application/json
+
+{
+    "currency": "Xdfka",
+    "amount": "15"
+}
+
