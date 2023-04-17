@@ -18,6 +18,13 @@ type jsonResponse struct {
 }
 
 func (app *application) GetPaymentIntent(w http.ResponseWriter, r *http.Request) {
+	var payload stripPayload
+	err := json.NewDecoder(r.Body).Decode(&payload)
+	if err != nil {
+		app.errorLog.Println(err)
+		return
+	}
+
 	j := jsonResponse{
 		OK: true,
 	}
