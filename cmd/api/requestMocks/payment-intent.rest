@@ -51,6 +51,6 @@ content-type: application/json
 
 {
     "currency": "Xdfka",
-    "amount": "15"
+    "amount": "150"
 }
 
