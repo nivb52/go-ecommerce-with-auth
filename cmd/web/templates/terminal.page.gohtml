@@ -16,20 +16,20 @@
 
     <div class="mb-3">
         <label for="amount" class="form-label">Amount</label>
-        <input type="text" class="form-control" id="amount" name="amount"
-            required="" autocomplete="amount-new">
+        <input type="number" class="form-control" id="amount" name="amount"
+            autofocus required min="19" max="99999" autocomplete="amount-new">
     </div>
 
     <div class="mb-3">
         <label for="cardholder-name" class="form-label">Cardholder Name</label>
         <input type="text" class="form-control" id="cardholder-name" name="cardholder_name"
-            required="" autocomplete="cardholder-name-new">
+         value="test-user"   required minlength="2" maxlength="50" autocomplete="cardholder-name-new">
     </div>
 
     <div class="mb-3">
         <label for="cardholder-email" class="form-label">Cardholder Email</label>
         <input type="email" class="form-control" id="cardholder-email" name="cardholder_email"
-            required="" autocomplete="cardholder-email-new">
+         value="test-user@gmail.com"   required  autocomplete="cardholder-email-new">
     </div>
 
     <div class="mb-3">
@@ -66,6 +66,7 @@
     const cardMessages = document.getElementById("card-messages");
     const payButton = document.getElementById("pay-button");
     const processing = document.getElementById("processing-payment");
+    const form = document.getElementById("charge_form");
 
     stripe = Stripe('pk_test_51MxDmKF7Zt0RDdq4W5iKnomQzcgiEK3RsUDvAZnK310e0iqdMwUdYGLsMQBqQUBGDPEtqsoke2Gi8tm2mb6P1ZHP00l9R6cAlj');
 
@@ -74,9 +75,26 @@
         payButton.classList.add('d-none');
         processing.classList.remove('d-none');
     }
+    function showPayButton(){
+        //payButton.disable()
+        payButton.classList.remove('d-none');
+        processing.classList.add('d-none');
+    }
+
+    // check for input errors
+    function toggleError(event, error) {
+        var displayError = document.getElementById("card-errors");
+        if (error) {
+            displayError.classList.remove('d-none');
+            displayError.textContent = error.message;
+        } else {
+            displayError.classList.add('d-none');
+            displayError.textContent = '';
+        }
+        showPayButton();
+    }
 
     function val() {
-        const form = document.getElementById("charge_form");
         if (form.checkValidity() === false) {
             this.event.preventDefault();
             this.event.stopPropagation();
@@ -110,8 +128,9 @@
                     console.log(data);
                 } catch (err) {
                     console.error(err);
+                    toggleError(null, err)
                 }
-            })
+            }).catch(err => toggleError(null, err))
     }
 
     (function() {
@@ -131,17 +150,7 @@
         });
         card.mount("#card-element");
 
-        // check for input errors
-        card.addEventListener('change', function(event) {
-            var displayError = document.getElementById("card-errors");
-            if (event.error) {
-                displayError.classList.remove('d-none');
-                displayError.textContent = event.error.message;
-            } else {
-                displayError.classList.add('d-none');
-                displayError.textContent = '';
-            }
-        });
+        card.addEventListener('change', (ev) => toggleError(ev, ev.error));
     })();
     </script>
 {{end}}
