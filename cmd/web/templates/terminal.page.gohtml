@@ -48,6 +48,11 @@
         </div>
     </div>
 
+    <input type="hidden" name="payment_intent" id="payment_intent">
+    <input type="hidden" name="payment_method" id="payment_method">
+    <input type="hidden" name="payment_amount" id="payment_amount">
+    <input type="hidden" name="payment_currency" id="payment_curreny">
+
 </form>
 
 {{end}}
@@ -62,7 +67,7 @@
     const payButton = document.getElementById("pay-button");
     const processing = document.getElementById("processing-payment");
 
-    stripe = Stripe('pk_test_somecode');
+    stripe = Stripe('pk_test_51MxDmKF7Zt0RDdq4W5iKnomQzcgiEK3RsUDvAZnK310e0iqdMwUdYGLsMQBqQUBGDPEtqsoke2Gi8tm2mb6P1ZHP00l9R6cAlj');
 
     function hidePayButton(){
         //payButton.disable()
@@ -71,7 +76,7 @@
     }
 
     function val() {
-        let form = document.getElementById("charge_form");
+        const form = document.getElementById("charge_form");
         if (form.checkValidity() === false) {
             this.event.preventDefault();
             this.event.stopPropagation();
@@ -80,6 +85,33 @@
         }
         form.classList.add("was-validated");
         hidePayButton()
+
+        const amount = String(parseFloat(document.getElementById("amount").value) * 100)
+        const payload = {
+            amount,
+            currency: 'USD',
+        }
+
+        const requestOptions = {
+            method: 'post',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+            body: JSON.stringify(payload),
+        }
+
+        fetch("http://localhost:4001/api/payment-intent", requestOptions)
+            .then(res => res.text())
+            .then(res => {
+                let data;
+                try {
+                    data = JSON.parse(res);
+                    console.log(data);
+                } catch (err) {
+                    console.error(err);
+                }
+            })
     }
 
     (function() {
