@@ -17,19 +17,19 @@
     <div class="mb-3">
         <label for="amount" class="form-label">Amount</label>
         <input type="number" class="form-control" id="amount" name="amount"
-            autofocus required min="19" max="99999" autocomplete="amount-new">
+            autofocus required min="19" max="99999"  autocomplete="amount-new">
     </div>
 
     <div class="mb-3">
         <label for="cardholder-name" class="form-label">Cardholder Name</label>
         <input type="text" class="form-control" id="cardholder-name" name="cardholder_name"
-         value="test-user"   required minlength="2" maxlength="50" autocomplete="cardholder-name-new">
+         value="test-user"   minlength="2" maxlength="50"  required="" autocomplete="cardholder-name-new">
     </div>
 
     <div class="mb-3">
         <label for="cardholder-email" class="form-label">Cardholder Email</label>
-        <input type="email" class="form-control" id="cardholder-email" name="cardholder_email"
-         value="test-user@gmail.com"   required  autocomplete="cardholder-email-new">
+        <input type="email" class="form-control" id="cardholder-email" name="email"
+           value="test-user@gmail.com" required="" autocomplete="cardholder-email-new">
     </div>
 
     <div class="mb-3">
@@ -66,9 +66,9 @@
     const cardMessages = document.getElementById("card-messages");
     const payButton = document.getElementById("pay-button");
     const processing = document.getElementById("processing-payment");
-    const form = document.getElementById("charge_form");
 
-    stripe = Stripe('pk_test_51MxDmKF7Zt0RDdq4W5iKnomQzcgiEK3RsUDvAZnK310e0iqdMwUdYGLsMQBqQUBGDPEtqsoke2Gi8tm2mb6P1ZHP00l9R6cAlj');
+    const ENDPOINT = {{.API}};
+    stripe = Stripe({{.STRIPEPK}});
 
     function hidePayButton() {
         payButton.classList.add("d-none");
@@ -94,18 +94,8 @@
         cardMessages.innerText = "Transaction successful";
     }
 
-    function toggleDisplayError(error) {
-        const displayErrorEl = document.getElementById("card-errors");
-        if (error) {
-            displayErrorEl.classList.remove('d-none');
-            displayErrorEl.textContent = error.message;
-        } else {
-            displayErrorEl.classList.add('d-none');
-            displayErrorEl.textContent = '';
-        }
-    }
-
     function val() {
+        let form = document.getElementById("charge_form");
         if (form.checkValidity() === false) {
             this.event.preventDefault();
             this.event.stopPropagation();
@@ -115,10 +105,10 @@
         form.classList.add("was-validated");
         hidePayButton();
 
-        const amount = String(parseFloat(document.getElementById("amount").value) * 100)
+        let amountToCharge = String(parseFloat(document.getElementById("amount").value) * 100)
         
         let payload = {
-            amount,
+            amount: amountToCharge,
             currency: 'USD',
         }
 
@@ -131,7 +121,8 @@
             body: JSON.stringify(payload),
         }
 
-        fetch("http://localhost:4001/api/payment-intent", requestOptions)
+        {{/* using StringMAp ("{{index .StringMap "publishable_key"}}", requestOptions) */}}
+        fetch(ENDPOINT+'/api/payment-intent', requestOptions)
             .then(response => response.text())
             .then(response => {
                 let data;
@@ -158,7 +149,7 @@
                                 document.getElementById("payment_currency").value = result.paymentIntent.currency;
                                 processing.classList.add("d-none");
                                 showCardSuccess();
-                                // would submit the form
+                                document.getElementById("charge_form").submit();
                             }
                         }
                     }).catch(err => {
@@ -167,7 +158,7 @@
                         showCardError(err.message);
                     });
                 } catch (err) {
-                    console.error(err);
+                    console.log(err);
                     showCardError("Invalid response from payment gateway!");
                     showPayButtons();
                 }
@@ -190,8 +181,18 @@
             hidePostalCode: true,
         });
         card.mount("#card-element");
+
         // check for input errors
-        card.addEventListener('change', (ev) => toggleDisplayError(ev.error));
+        card.addEventListener('change', function(event) {
+            var displayError = document.getElementById("card-errors");
+            if (event.error) {
+                displayError.classList.remove('d-none');
+                displayError.textContent = event.error.message;
+            } else {
+                displayError.classList.add('d-none');
+                displayError.textContent = '';
+            }
+        });
     })();
     </script>
 {{end}}

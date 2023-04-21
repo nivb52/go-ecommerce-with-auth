@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	_ "github.com/joho/godotenv/autoload"
 )
 
 const version = "1.0.0"
@@ -32,6 +34,7 @@ type application struct {
 	errorLog      *log.Logger
 	templateCache map[string]*template.Template
 	version       string
+	cssVersion    string
 }
 
 func (app *application) serve() error {
@@ -53,7 +56,7 @@ func main() {
 	// run args
 	flag.IntVar(&cfg.port, "port", 4000, "Server port to listen on")
 	flag.StringVar(&cfg.env, "env", "development", "Application env")
-	flag.StringVar(&cfg.api, "api", "http://localhost:4000", "App url")
+	flag.StringVar(&cfg.api, "api", "http://localhost:4001", "App url")
 	flag.Parse()
 
 	// secrets

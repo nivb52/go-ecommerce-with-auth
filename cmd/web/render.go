@@ -19,6 +19,7 @@ type templateData struct {
 	Error           string
 	IsAuthenticated int
 	API             string
+	STRIPEPK        string
 	CSSVersion      string
 }
 
@@ -30,6 +31,9 @@ var functions = template.FuncMap{}
 var templateFS embed.FS
 
 func (app *application) addDefaultData(td *templateData, r *http.Request) *templateData {
+	td.API = app.config.api
+	td.STRIPEPK = app.config.stripe.key
+	td.CSSVersion = app.cssVersion
 	return td
 }
 
@@ -61,7 +65,6 @@ func (app *application) renderTemplate(
 	}
 
 	td = app.addDefaultData(td, r)
-
 	err = t.Execute(w, td)
 	if err != nil {
 		app.errorLog.Println(err)
