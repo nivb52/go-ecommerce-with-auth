@@ -6,7 +6,7 @@ content-type: application/json
     
 {
     "currency": "USD",
-    "amount": "150"
+    "amount": "500"
 }
 ###
 
