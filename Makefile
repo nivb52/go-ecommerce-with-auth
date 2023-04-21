@@ -1,7 +1,5 @@
 # WIN
 SHELL=cmd
-STRIPE_SECRET=
-STRIPE_KEY=
 GOSTRIPE_PORT=4000
 API_PORT=4001
 DSN="root@(localhost:3306)/widgets?parseTime=true&tls=false"
@@ -17,6 +15,36 @@ clean:
 	@go clean
 	@echo Cleaned and deleted binaries
 
+## watch_front: Watch the front end
+watch_front:
+	@echo Watch front end...
+	@air -c ./web.air.toml
+	@echo Front end built!
+dev_front: watch_front
+
+## watch_back: Watch the back end
+watch_back:
+	@echo Watch back end...
+	@air -c ./api.air.toml
+	@echo Front end built!
+dev_back: watch_back
+
+## dev: starts watching files of front (web) and back end
+dev : dev_front dev_back
+serve : watch_front watch_back
+
+## debug_front: debugs the front end
+debug_front:
+	@echo Debug front end...
+	@ D:\d-dev\goworkspace\bin\dlv.exe dap --listen=127.0.0.1:62712 from D:\d-dev\goworkspace\src\github.com\nivb52\go-ecommerce-with-auth\cmd\web
+	@echo Front end built!
+
+## debug_back debugs the back end
+debug_back:
+	@echo Debug back end...
+	@ D:\d-dev\goworkspace\bin\dlv.exe dap --listen=127.0.0.1:62712 from D:\d-dev\goworkspace\src\github.com\nivb52\go-ecommerce-with-auth\cmd\api
+	@echo Front end built!
+
 ## build_front: builds the front end
 build_front:
 	@echo Building front end...
@@ -30,18 +58,18 @@ build_back:
 	@echo Back end built!
 
 ## start: starts front and back end
-start: start_front start_back
+start : start_front start_back
 
 ## start_front: starts the front end
 start_front: build_front
 	@echo Starting the front end...
-	set STRIPE_KEY=${STRIPE_KEY}&& set STRIPE_SECRET=${STRIPE_SECRET}&& start /B .\dist\gostripe.exe -dsn=${DSN}
+	start /B .\dist\gostripe.exe -dsn=${DSN}
 	@echo Front end running!
 
 ## start_back: starts the back end
 start_back: build_back
 	@echo Starting the back end...
-	set STRIPE_KEY=${STRIPE_KEY}&& set STRIPE_SECRET=${STRIPE_SECRET}&& start /B .\dist\gostripe_api.exe -dsn=${DSN}
+	start /B .\dist\gostripe_api.exe -dsn=${DSN}
 	@echo Back end running!
 
 ## stop: stops the front and back end
