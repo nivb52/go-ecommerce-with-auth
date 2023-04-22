@@ -67,7 +67,6 @@
     const payButton = document.getElementById("pay-button");
     const processing = document.getElementById("processing-payment");
 
-    const ENDPOINT = {{.API}};
     stripe = Stripe({{.STRIPEPK}});
 
     function hidePayButton() {
@@ -106,63 +105,47 @@
         hidePayButton();
 
         let amountToCharge = String(parseFloat(document.getElementById("amount").value) * 100)
-        
         let payload = {
             amount: amountToCharge,
             currency: 'USD',
         }
-
-        const requestOptions = {
-            method: 'post',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(payload),
-        }
-
-        {{/* using StringMAp ("{{index .StringMap "publishable_key"}}", requestOptions) */}}
-        fetch(ENDPOINT+'/api/payment-intent', requestOptions)
-            .then(response => response.text())
-            .then(response => {
-                let data;
-                try {
-                    data = JSON.parse(response);
-                    stripe.confirmCardPayment(data.client_secret, {
-                        payment_method: {
-                            card: card,
-                            billing_details: {
-                                name: document.getElementById("cardholder-name").value,
-                            }
-                        }
-                    }).then(function(result) {
-                        if (result.error) {
-                            // card declined, or something went wrong with the card
-                            showCardError(result.error.message);
-                            showPayButtons();
-                        } else if(result.paymentIntent) {
-                            if (result.paymentIntent.status === "succeeded") {
-                                // we have charged the card
-                                document.getElementById("payment_method").value = result.paymentIntent.payment_method_types[0];
-                                document.getElementById("payment_intent").value = result.paymentIntent.id;
-                                document.getElementById("payment_amount").value = result.paymentIntent.amount;
-                                document.getElementById("payment_currency").value = result.paymentIntent.currency;
-                                processing.classList.add("d-none");
-                                showCardSuccess();
-                                document.getElementById("charge_form").submit();
-                            }
-                        }
-                    }).catch(err => {
-                        console.error(err);
-                        // due it may not be cardError but server error or JS code error
-                        showCardError(err.message);
-                    });
-                } catch (err) {
-                    console.log(err);
-                    showCardError("Invalid response from payment gateway!");
-                    showPayButtons();
+        postData('payment-intent', payload)
+        .then(data => {
+            console.log(data); // JSON data parsed by `data.json()` call
+            stripe.confirmCardPayment(data.client_secret, {
+                payment_method: {
+                    card: card,
+                    billing_details: {
+                        name: document.getElementById("cardholder-name").value,
+                    }
                 }
-            })
+            }).then(function(result) {
+                if (result.error) {
+                    // card declined, or something went wrong with the card
+                    showCardError(result.error.message);
+                    showPayButtons();
+                } else if(result.paymentIntent) {
+                    if (result.paymentIntent.status === "succeeded") {
+                        // we have charged the card
+                        document.getElementById("payment_method").value = result.paymentIntent.payment_method_types[0];
+                        document.getElementById("payment_intent").value = result.paymentIntent.id;
+                        document.getElementById("payment_amount").value = result.paymentIntent.amount;
+                        document.getElementById("payment_currency").value = result.paymentIntent.currency;
+                        processing.classList.add("d-none");
+                        showCardSuccess();
+                        document.getElementById("charge_form").submit();
+                    }
+                }
+            }).catch(err => {
+                console.error(err);
+                // due it may not be cardError but server error or JS code error
+                throw(err)
+            });
+        }).catch(err  => {
+            console.error(err);
+            showCardError("Invalid response from payment gateway!");
+            showPayButtons();
+        });
     }
 
     (function() {
@@ -195,4 +178,9 @@
         });
     })();
     </script>
+
+    {{/* using StringMAp ("{{index .StringMap "publishable_key"}}", requestOptions) */}}
+
 {{end}}
+
+
