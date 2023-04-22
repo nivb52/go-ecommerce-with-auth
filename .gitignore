@@ -6,3 +6,7 @@ prod.env
 staging.env
 dev.env
 local.env
+
+
+__debug_bin.exe
+*.myprivate.*
