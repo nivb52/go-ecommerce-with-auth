@@ -5,12 +5,27 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Connect to server",
+            "name": "Launch file",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${file}"
+        },
+        {
+            "name": "API (backend}",
             "type": "go",
             "debugAdapter": "dlv-dap", // the default
             "request": "launch",
             "mode": "debug",
-            "program": "D:\\d-dev\\goworkspace\\src\\github.com\\nivb52\\go-ecommerce-with-auth\\cmd\\api",
+            "program": "${workspaceFolder}\\cmd\\api",
+        },
+        {
+            "name": "WEB (frontednd}",
+            "type": "go",
+            "debugAdapter": "dlv-dap", // the default
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}\\cmd\\web",
         }
     ]
 }
