@@ -23,7 +23,36 @@
     </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
+<script>
+    const baseUrl = {{.API}};
+    window.postData = postData
+    async function postData(endpoint = "", data = {}, parser = 'JSON') {
+        const url = baseUrl + "/api/"+ endpoint
+        if (!url || !url.trim().length) {
+            throw new Error("URL is required")
+        }
+        if (!data || typeof data !== 'object'){
+            throw new Error("data is required as Object")
+        }
 
+        // Default options are marked with *
+        const response = await fetch(url, {
+            method: "POST", // *GET, POST, PUT, DELETE, etc.
+            mode: "no-cors", // no-cors, *cors, same-origin
+            cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+            // credentials: "omit", // include, *same-origin, omit
+            headers: {
+            "Content-Type": "application/json",
+            // 'Content-Type': 'application/x-www-form-urlencoded',
+            "Accept": "application/json",
+            },
+            redirect: "follow", // manual, *follow, error
+            referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+            body: JSON.stringify(data), // body data type must match "Content-Type" header
+        });
+        return parser === 'JSON' ? response.json() : response.text(); // parses JSON response into native JavaScript objects
+    }
+</script>
   {{block "js" .}}
 
   {{end}}
