@@ -36,13 +36,13 @@ serve : watch_front watch_back
 ## debug_front: debugs the front end
 debug_front:
 	@echo Debug front end...
-	@ D:\d-dev\goworkspace\bin\dlv.exe dap --listen=127.0.0.1:62712 from D:\d-dev\goworkspace\src\github.com\nivb52\go-ecommerce-with-auth\cmd\web
+	@ D:\d-dev\goworkspace\bin\dlv.exe dap --listen=127.0.0.1:62712 from ${pwd}\cmd\web
 	@echo Front end built!
 
 ## debug_back debugs the back end
 debug_back:
 	@echo Debug back end...
-	@ D:\d-dev\goworkspace\bin\dlv.exe dap --listen=127.0.0.1:62712 from D:\d-dev\goworkspace\src\github.com\nivb52\go-ecommerce-with-auth\cmd\api
+	@ D:\d-dev\goworkspace\bin\dlv.exe dap --listen=127.0.0.1:62712 from ${pwd}\cmd\api
 	@echo Front end built!
 
 ## build_front: builds the front end
