@@ -7,6 +7,6 @@ staging.env
 dev.env
 local.env
 
-
+/dist
 __debug_bin.exe
 *.myprivate.*
