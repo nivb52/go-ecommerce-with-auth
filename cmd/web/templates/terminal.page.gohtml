@@ -110,8 +110,8 @@
             currency: 'USD',
         }
         postData('payment-intent', payload)
-        .then(data => {
-            console.log(data); // JSON data parsed by `data.json()` call
+        .then(data => {  // JSON data parsed by `data.json()` call
+            // https://stripe.com/docs/payments/accept-a-payment?ui=elements&client=html
             stripe.confirmCardPayment(data.client_secret, {
                 payment_method: {
                     card: card,

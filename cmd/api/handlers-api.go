@@ -56,14 +56,18 @@ func (app *application) GetPaymentIntent(w http.ResponseWriter, r *http.Request)
 	}
 
 	if okay {
-		out, err := json.MarshalIndent(pi, "", " ")
-		if err != nil {
-			app.errorLog.Println(err)
-			return
-		}
 		app.infoLog.Println("Card Charged")
+		type CheckoutData struct {
+			ClientSecret string `json:"client_secret"`
+		}
+		data := CheckoutData{
+			ClientSecret: pi.ClientSecret,
+		}
+
 		w.Header().Set("Content-Type", "application/json")
-		w.Write(out)
+		// w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(data)
 	} else {
 		j := jsonResponse{
 			OK:      true,
@@ -77,8 +81,7 @@ func (app *application) GetPaymentIntent(w http.ResponseWriter, r *http.Request)
 		}
 
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Write(out)
 	}
-
-	return
 }
