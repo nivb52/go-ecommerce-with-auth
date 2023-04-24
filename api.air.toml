@@ -9,13 +9,13 @@ tmp_dir = "tmp"
 # Just plain old shell command. You could use `make` as well.
 cmd = "go build -o ./tmp/api/main.exe ./cmd/api/"
 # Binary file yields from `cmd`.
-bin = "tmp main"
+bin = "tmp/main"
 # Customize binary.
-full_bin = "./tmp/api/main"
+full_bin = "./tmp/api"
 # Watch these filename extensions.
 include_ext = ["go"]
 # Ignore these filename extensions or directories.
-exclude_dir = ["cmd\\web", "assets", "tmp", "vendor","dist"]
+exclude_dir = ["cmd\\web", "assets", "tmp", "vendor","dist", "run"]
 # Watch these directories if you specified.
 include_dir = []
 # Exclude files.
