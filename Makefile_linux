@@ -3,6 +3,7 @@ SHELL=bash
 GOSTRIPE_PORT=4000
 API_PORT=4001
 DSN="root@(localhost:3306)/widgets?parseTime=true&tls=false"
+air="$(HOME)/go/bin/air"
 
 ## build: builds all binaries
 build: clean build_front build_back
@@ -17,17 +18,23 @@ clean:
 
 ## watch_front: Watch the front end
 watch_front:
+	go build -o ./tmp/web/main ./cmd/web/
+	@echo "Set permission to ./tmp/web/main"
+	@chmod +x ./tmp/web/main
 	@echo "Watch front end..."
-	@~/go/bin/air -c ./web.air.toml
+	@$(air) -c ./web.air.toml
 	@echo "Front end built!"
 dev_front: watch_front
 dev front: watch_front
 
 ## watch_back: Watch the back end
 watch_back:
+	go build -o ./tmp/api/main ./cmd/api/
+	@echo "Set permission to ./tmp/api/main"
+	@chmod +x ./tmp/api/main
 	@echo "Watch back end..."
-	@~/go/bin/air -c ./api.air.toml
-	@echo "Front end built!"
+	@$(air) -c ./api.air.toml
+	@echo "Back end built!"
 dev_back: watch_back
 dev back: watch_back
 
