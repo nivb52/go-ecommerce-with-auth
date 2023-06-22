@@ -57,6 +57,7 @@ func main() {
 	flag.IntVar(&cfg.port, "port", 4000, "Server port to listen on")
 	flag.StringVar(&cfg.env, "env", "development", "Application env")
 	flag.StringVar(&cfg.api, "api", "http://localhost:4001", "App url")
+	flag.StringVar(&cfg.db.dsn, "mysql", os.Getenv("mysql"), "connection string to mysql")
 	flag.Parse()
 
 	// secrets
