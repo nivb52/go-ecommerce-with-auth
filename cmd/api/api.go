@@ -8,7 +8,8 @@ import (
 	"os"
 	"time"
 
-	_ "github.com/joho/godotenv/autoload"
+	"github.com/joho/godotenv"
+	//_ "github.com/joho/godotenv/autoload"
 )
 
 const version = "1.0.0"
@@ -48,6 +49,11 @@ func (app *application) serve() error {
 }
 
 func main() {
+	errEnv := godotenv.Load("./cmd/api/.env")
+	if errEnv != nil {
+		log.Fatal("Error loading .env file ", errEnv)
+	}
+
 	var cfg config
 	// run args
 	flag.IntVar(&cfg.port, "port", 4001, "Server port to listen on")
