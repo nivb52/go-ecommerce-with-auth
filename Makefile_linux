@@ -17,12 +17,11 @@ clean:
 	@echo "Cleaned and deleted binaries"
 
 ## watch_front: Watch the front end
-watch_front:
-	go build -o ./tmp/web/main ./cmd/web/
-	@echo "Set permission to ./tmp/web/main"
-	@chmod +x ./tmp/web/main
+watch_front:	
+	#@echo "Set permission to ./tmp/web/main"
+	#@chmod +x ./tmp/web/main
 	@echo "Watch front end..."
-	@$(air) -c ./web.air.toml
+	@$(air) -c ./web.air.linux.toml
 	@echo "Front end built!"
 dev_front: watch_front
 dev front: watch_front
@@ -33,7 +32,7 @@ watch_back:
 	@echo "Set permission to ./tmp/api/main"
 	@chmod +x ./tmp/api/main
 	@echo "Watch back end..."
-	@$(air) -c ./api.air.toml
+	@$(air) -c ./api.air.linux.toml
 	@echo "Back end built!"
 dev_back: watch_back
 dev back: watch_back
