@@ -3,13 +3,15 @@ package main
 import (
 	"flag"
 	"fmt"
+	"go-ecommerce-with-auth/internal/driver"
 	"html/template"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
-	_ "github.com/joho/godotenv/autoload"
+	"github.com/joho/godotenv"
+	// _ "github.com/joho/godotenv/autoload"
 )
 
 const version = "1.0.0"
@@ -52,6 +54,11 @@ func (app *application) serve() error {
 }
 
 func main() {
+	errEnv := godotenv.Load("./cmd/web/local.env")
+	if errEnv != nil {
+		log.Fatal("Error loading .env file ", errEnv)
+	}
+
 	var cfg config
 	// run args
 	flag.IntVar(&cfg.port, "port", 4000, "Server port to listen on")
@@ -61,12 +68,21 @@ func main() {
 	flag.Parse()
 
 	// secrets
+	//cfg.db.dsn = os.Getenv("MYSQL")
 	cfg.stripe.key = os.Getenv("STRIPE_KEY")
 	cfg.stripe.secret = os.Getenv("STRIPE_SECRET")
 
 	// logs
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+	// end logs
+
+	conn, dbErr := driver.OpenDB(cfg.db.dsn)
+	if dbErr != nil {
+		errorLog.Fatal(":: DB connction failed, error: ", dbErr)
+	}
+
+	defer conn.Close()
 
 	tc := make(map[string]*template.Template)
 
