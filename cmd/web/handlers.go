@@ -71,7 +71,7 @@ func (app *application) ChargeOne(w http.ResponseWriter, r *http.Request) {
 		Name:           "Cool Widget",
 		Description:    "Lorem Ipsum",
 		InventoryLevel: 10,
-		Price:          25,
+		Price:          2500,
 	}
 
 	data := make(map[string]interface{})

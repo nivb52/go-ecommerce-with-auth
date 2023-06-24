@@ -6,7 +6,7 @@
 
 {{ define "content" }}
 {{ $widget := index .Data "widget"}}
-{{$widget.Name}}
+
 <h2 class="mt-3 text-center" > Buy One Widget </h2>
 <hr>
 <img class="center" src="static/widget.png" />
@@ -20,7 +20,8 @@ autocomplete="off" novalidate="">
     <div class="mb-3">
         <label for="amount" class="form-label">Amount</label>
         <input type="number" class="form-control" id="amount" name="amount"
-            autofocus required min="19" max="99999"  autocomplete="amount-new">
+            autofocus required readonly min="19" max="99999"  autocomplete="amount-new"
+            >
     </div>
 
     <div class="mb-3">
@@ -51,15 +52,24 @@ autocomplete="off" novalidate="">
         </div>
     </div>
 
-    <input type="hidden" name="payment_intent" id="payment_intent">
-    <input type="hidden" name="payment_method" id="payment_method">
-    <input type="hidden" name="payment_amount" id="payment_amount">
-    <input type="hidden" name="payment_currency" id="payment_currency">
+    <input type="hidden" name="product_id" id="product_id" value="{{$widget.ID}}">
+    <input type="hidden" name="product_price" id="product_price" value="{{$widget.Price}}">
 
 </form>
 {{ end }}
 
 
 {{define "js"}}
+<script>
+const amountEl = document.querySelector("#charge_form  input#amount");
+const dbPriceEl = document.querySelector("input#product_price");
+
+const price = Number(dbPriceEl.value)
+if (Number.isNaN(price) || !price) {
+    console.error("Something went wrong");
+}
+amountEl.value = price / 100;
+console.log("dbPriceEl: " , price)
+</script>
 {{ template "stripe-js" .}}
 {{end}}
