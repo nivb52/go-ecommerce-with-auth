@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"go-ecommerce-with-auth/internal/driver"
 	"log"
 	"net/http"
 	"os"
@@ -52,6 +53,7 @@ func main() {
 	// run args
 	flag.IntVar(&cfg.port, "port", 4001, "Server port to listen on")
 	flag.StringVar(&cfg.env, "env", "development", "Application env")
+	flag.StringVar(&cfg.db.dsn, "dsn", os.Getenv("DSN_API"), "Mysql connection string")
 	flag.Parse()
 
 	// secrets
@@ -61,6 +63,14 @@ func main() {
 	// logs
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+	conn, connErr := driver.OpenDB(cfg.db.dsn)
+	if connErr != nil {
+		fmt.Printf("ENV: DSN_API: %s \n", os.Getenv("DSN_API"))
+		log.Fatal(":: DB connecition Failed! Exiting")
+	}
+
+	defer conn.Close()
 
 	app := &application{
 		config:   cfg,
