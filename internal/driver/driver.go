@@ -15,12 +15,12 @@ func OpenDB(dsn string) (*sql.DB, error) {
 		return nil, err
 	}
 
-	err = db.Ping()
-	if err != nil {
-		fmt.Println(":: mySQL Driver :: Ping error:")
-		fmt.Println(err)
-		return nil, err
-	}
+	// err = db.Ping()
+	// if err != nil {
+	// 	fmt.Println(":: mySQL Driver :: Ping error:")
+	// 	fmt.Println(err)
+	// 	return nil, err
+	// }
 
 	return db, nil
 }

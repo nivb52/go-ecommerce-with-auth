@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	_ "github.com/joho/godotenv/autoload"
+	godotenv "github.com/joho/godotenv"
 )
 
 const version = "1.0.0"
@@ -49,6 +49,11 @@ func (app *application) serve() error {
 }
 
 func main() {
+	envErr := godotenv.Load("./.env")
+	if envErr != nil {
+		log.Fatal(":: ENV FILE IS MISSING OR WRONG! Exiting")
+	}
+
 	var cfg config
 	// run args
 	flag.IntVar(&cfg.port, "port", 4001, "Server port to listen on")
@@ -82,6 +87,6 @@ func main() {
 	err := app.serve()
 	if err != nil {
 		app.errorLog.Println(err)
-		log.Fatal("exiting API")
+		log.Fatal(":: Exiting API")
 	}
 }
