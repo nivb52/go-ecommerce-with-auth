@@ -61,4 +61,13 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 	}); err != nil {
 		app.errorLog.Println(err)
 	}
+
+}
+
+func (app *application) ChargeOne(w http.ResponseWriter, r *http.Request) {
+	err := app.renderTemplate(w, r, "buy-once", nil)
+	if err != nil {
+		app.errorLog.Println(err)
+	}
+
 }
