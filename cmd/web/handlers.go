@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"go-ecommerce-with-auth/internal/models"
 	"net/http"
 )
 
@@ -65,7 +66,19 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 }
 
 func (app *application) ChargeOne(w http.ResponseWriter, r *http.Request) {
-	err := app.renderTemplate(w, r, "buy-once", nil)
+	widget := models.Widget{
+		ID:             1,
+		Name:           "Cool Widget",
+		Description:    "Lorem Ipsum",
+		InventoryLevel: 10,
+		Price:          25,
+	}
+
+	data := make(map[string]interface{})
+	data["widget"] = widget
+	err := app.renderTemplate(w, r, "buy-once", &templateData{
+		Data: data,
+	}, "stripe-js")
 	if err != nil {
 		app.errorLog.Println(err)
 	}
