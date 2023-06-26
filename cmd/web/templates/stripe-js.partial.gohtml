@@ -36,7 +36,7 @@
     }
 
     function val() {
-        let form = document.getElementById("charge_form");
+        const form = document.getElementById("charge_form");
         if (form.checkValidity() === false) {
             this.event.preventDefault();
             this.event.stopPropagation();
@@ -46,8 +46,8 @@
         form.classList.add("was-validated");
         hidePayButton();
 
-        let amountToCharge = String(parseFloat(document.getElementById("amount").value) * 100)
-        let payload = {
+        const amountToCharge = String(parseFloat(document.getElementById("amount").value) * 100)
+        const payload = {
             amount: amountToCharge,
             currency: 'USD',
         }
