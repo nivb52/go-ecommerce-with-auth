@@ -9,7 +9,12 @@
 
 <h2 class="mt-3 text-center" > Buy One Widget </h2>
 <hr>
-<img class="center" src="static/widget.png" />
+<img class="flex center" src="static/widget.png" />
+
+    <div class= "mb-3">
+        <h3 for="amount" class="form-label">Amount
+        <span> {{formatCurrency $widget.Price}} </span></h3>
+    </div>
 <div class="alert alert-danger text-center d-none" id="card-messages"></div>
 
 <form action="/payment-succeeded" method="post"
@@ -17,12 +22,6 @@ name="charge_form" id="charge_form"
 class="d-block needs-validation charge-form"
 autocomplete="off" novalidate="">
 
-    <div class="mb-3">
-        <label for="amount" class="form-label">Amount</label>
-        <input type="number" class="form-control" id="amount" name="amount"
-            autofocus required readonly min="19" max="99999"  autocomplete="amount-new"
-            >
-    </div>
 
     <div class="mb-3">
         <label for="cardholder-name" class="form-label">Cardholder Name</label>
@@ -60,16 +59,6 @@ autocomplete="off" novalidate="">
 
 
 {{define "js"}}
-<script>
-const amountEl = document.querySelector("#charge_form  input#amount");
-const dbPriceEl = document.querySelector("input#product_price");
 
-const price = Number(dbPriceEl.value)
-if (Number.isNaN(price) || !price) {
-    console.error("Something went wrong");
-}
-amountEl.value = price / 100;
-console.log("dbPriceEl: " , price)
-</script>
 {{ template "stripe-js" .}}
 {{end}}
