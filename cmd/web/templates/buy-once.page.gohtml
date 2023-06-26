@@ -53,6 +53,11 @@ autocomplete="off" novalidate="">
 
     <input type="hidden" name="product_id" id="product_id" value="{{$widget.ID}}">
     <input type="hidden" name="amount" id="amount" value="{{$widget.Price}}">
+    // for payment succeeded page
+    <input type="hidden" name="payment_intent" id="payment_intent">
+    <input type="hidden" name="payment_method" id="payment_method">
+    <input type="hidden" name="payment_amount" id="payment_amount">
+    <input type="hidden" name="payment_currency" id="payment_currency">
 
 </form>
 {{ end }}
@@ -71,7 +76,7 @@ autocomplete="off" novalidate="">
         form.classList.add("was-validated");
         hidePayButton();
 
-        const amountToCharge = String(parseFloat(document.getElementById("amount").value) * 100)
+        const amountToCharge = String(parseFloat(document.getElementById("amount").value))
         const payload = {
             amount: amountToCharge,
             currency: 'USD',
@@ -94,6 +99,11 @@ autocomplete="off" novalidate="">
                 } else if(result.paymentIntent) {
                     if (result.paymentIntent.status === "succeeded") {
                         // we have charged the card
+                        document.getElementById("payment_method").value = result.paymentIntent?.payment_method_types[0];
+                        document.getElementById("payment_intent").value = result.paymentIntent?.id;
+                        document.getElementById("payment_amount").value = result.paymentIntent?.amount;
+                        document.getElementById("payment_currency").value = result.paymentIntent?.currency;
+
                         processing.classList.add("d-none");
                         showCardSuccess();
                         document.getElementById("charge_form").submit();
