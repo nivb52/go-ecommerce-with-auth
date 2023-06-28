@@ -5,6 +5,8 @@ import (
 	"go-ecommerce-with-auth/internal/cards"
 	"net/http"
 	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type stripPayload struct {
@@ -84,4 +86,25 @@ func (app *application) GetPaymentIntent(w http.ResponseWriter, r *http.Request)
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Write(out)
 	}
+}
+
+func (app *application) GetWidgetByID(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	widgetID, _ := strconv.Atoi(id)
+
+	widget, err := app.DB.GetWidget(widgetID)
+	if err != nil {
+		// TODO: make globbal not found fnuc
+		app.errorLog.Println(err)
+		jsonBytes, _ := json.Marshal("{message: 'Widget Not Found', code: 404}")
+		w.Header().Set("Content-type", "application/json")
+		w.Write(jsonBytes)
+	}
+
+	out, jsonErr := json.Marshal(widget)
+	if jsonErr != nil {
+		app.errorLog.Println(jsonErr)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(out)
 }
