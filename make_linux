@@ -58,7 +58,7 @@ build_back:
 	@echo "Back end built!"
 
 
-########### STOP  ###########
+########### STOP ###########
 stop: stop_front stop_back
 	@echo "All applications stopped"
 
@@ -74,11 +74,10 @@ stop_back:
 
 
 ########### DB ###########
-## DB commands
 db_up:
 	db_down
 	@echo "Docker compose up: db image..."
-	@docker-compose --env-file ./cmd/.env   up -d  db 
+	@docker-compose --env-file .env --env-file local.env  up -d  db 
 	@echo "Docker db up!"
 
 db_down:
