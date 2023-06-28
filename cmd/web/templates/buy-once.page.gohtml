@@ -9,12 +9,21 @@
 
 <h2 class="mt-3 text-center" > Buy One Widget </h2>
 <hr>
-<img class="flex center" src="static/widget.png" />
-
+<div class= "mb-3" 
+    style="
+    display:grid;     
+    grid-template-columns: 1fr 10fr;
+    place-items: start;
+    align-items: center;
+    ">
+    <img class="flex center" src="static/widget.png" />
     <div class= "mb-3">
+        <h3 >{{ $widget.Name}} </h3>
         <h3 >Amount
         <span> {{formatCurrency $widget.Price}} </span></h3>
     </div>
+ </div>
+
 <div class="alert alert-danger text-center d-none" id="card-messages"></div>
 
 <form action="/payment-succeeded" method="post"
