@@ -49,7 +49,7 @@ func (app *application) serve() error {
 }
 
 func main() {
-	envErr := godotenv.Load("./.env")
+	envErr := godotenv.Load(".env")
 	if envErr != nil {
 		log.Fatal(":: ENV FILE IS MISSING OR WRONG! Exiting")
 	}

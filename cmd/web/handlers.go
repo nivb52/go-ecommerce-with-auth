@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"go-ecommerce-with-auth/internal/models"
 	"net/http"
+	"os"
 )
 
 func (app *application) Liveness(w http.ResponseWriter, r *http.Request) {
@@ -13,7 +14,7 @@ func (app *application) Liveness(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:4000")
+	w.Header().Set("Access-Control-Allow-Origin", "http://localhost:"+os.Getenv("GOSTRIPE_PORT"))
 	w.Write(jsonBytes)
 }
 

@@ -1,0 +1,96 @@
+# LINUX
+SHELL=bash
+GOSTRIPE_PORT=4000
+API_PORT=4001
+# DSN="root@(localhost:3306)/widgets?parseTime=true&tls=false"
+
+########### SERVE / DEV  => WATCH ALL  ###########
+dev : dev_front dev_back db_up 
+serve : dev
+
+########### BUILD ALL  ###########
+build: clean build_front build_back
+	@echo "All binaries built!"
+
+## clean: cleans all binaries and runs go clean
+clean:
+	@echo "Cleaning..."
+	@- rm -f dist/*
+	@go clean
+	@echo "Cleaned and deleted binaries"
+
+########### WATCH / DEV ###########
+watch_front: copy_env
+	@echo "Watch front end..."
+	@~/go/bin/air -c ./web.air.linux.toml
+	@echo "Front end built!"
+dev_front: watch_front
+
+watch_back: copy_env
+	@echo "Watch back end..."
+	@~/go/bin/air -c ./api.air.linux.toml
+	@echo "Front end built!"
+dev_back: watch_back
+
+########### START  ###########
+start : start_front start_back
+
+start_front: build_front
+	@echo "Starting the front end..."
+	./dist/gostripe --port=${GOSTRIPE_PORT}
+	@echo "Front end running!"
+
+build_front:
+	@echo "Building front end..."
+	@go build -o dist/gostripe ./cmd/web
+	@echo "Front end built!"
+
+
+start_back: build_back
+	@echo "Starting the back end..."
+	./dist/gostripe_api --port=${API_PORT}
+	@echo "Back end running!"
+
+
+build_back:
+	@echo "Building back end..."
+	@go build -o dist/gostripe_api ./cmd/api
+	@echo "Back end built!"
+
+
+########### STOP  ###########
+stop: stop_front stop_back
+	@echo "All applications stopped"
+
+stop_front:
+	@echo "Stopping the front end..."
+	@-pkill -SIGTREM -f "gostripe --port ${GOSTRIPE_PORT}"
+	@echo "Stopped front end"
+
+stop_back:
+	@echo "Stopping the back end..."
+	@-pkill -SIGTREM -f "gostripe_api --port ${API_PORT}"
+	@echo "Stopped back end"
+
+
+########### DB ###########
+## DB commands
+db_up:
+	db_down
+	@echo "Docker compose up: db image..."
+	@docker-compose --env-file ./cmd/.env   up -d  db 
+	@echo "Docker db up!"
+
+db_down:
+	@echo "Docker compose down: db image..."
+	@docker-compose down db
+	@echo "Docker db down!"
+
+########### UTILS  ###########
+copy_env:
+	@echo "Copying env file..."
+	@cat .env | head -1
+	@cp .env ./cmd/api/.env
+	@cp .env ./cmd/web/.env
+
+########### TEST ###########
