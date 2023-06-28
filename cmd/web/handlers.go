@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"go-ecommerce-with-auth/internal/models"
 	"net/http"
 	"os"
 )
@@ -62,12 +61,13 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 }
 
 func (app *application) ChargeOne(w http.ResponseWriter, r *http.Request) {
-	widget := models.Widget{
-		ID:             1,
-		Name:           "Cool Widget",
-		Description:    "Lorem Ipsum",
-		InventoryLevel: 10,
-		Price:          2500,
+	db := app.DB
+	widget, dbErr := db.GetWidget(1)
+	if dbErr != nil {
+		app.errorLog.Println(dbErr)
+		jsonBytes, _ := json.Marshal("{message: 'Widget Not Found', code: 404}")
+		w.Header().Set("Content-type", "application/json")
+		w.Write(jsonBytes)
 	}
 
 	data := make(map[string]interface{})
