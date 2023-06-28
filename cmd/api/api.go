@@ -76,7 +76,6 @@ func main() {
 		fmt.Printf("ENV: DSN_API: %s \n", os.Getenv("DSN_API"))
 		log.Fatal(":: DB connecition Failed! Exiting")
 	}
-
 	defer conn.Close()
 
 	app := &application{

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"go-ecommerce-with-auth/internal/driver"
+	"go-ecommerce-with-auth/internal/models"
 	"html/template"
 	"log"
 	"net/http"
@@ -36,6 +37,7 @@ type application struct {
 	templateCache map[string]*template.Template
 	version       string
 	cssVersion    string
+	DB            models.DBModel
 }
 
 func (app *application) serve() error {
@@ -73,7 +75,6 @@ func main() {
 	if connErr != nil {
 		log.Fatal(":: DB connecition Failed! Exiting")
 	}
-
 	defer conn.Close()
 	tc := make(map[string]*template.Template)
 
@@ -84,6 +85,7 @@ func main() {
 		templateCache: tc,
 		version:       version,
 		cssVersion:    cssVersion,
+		DB:            models.DBModel{DB: conn},
 	}
 
 	err := app.serve()
