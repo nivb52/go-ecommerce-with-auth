@@ -68,7 +68,7 @@ build_back:
 	@echo Back end built!
 
 ########### STOP ###########
-stop: stop_front stop_back
+stop: stop_front stop_back db_down
 	@echo All applications stopped
 
 stop_front:
