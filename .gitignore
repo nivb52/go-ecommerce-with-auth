@@ -10,3 +10,6 @@ local.env
 /dist
 __debug_bin.exe
 *.myprivate.*
+
+# VSCODE SQL ADDON
+*.session.sql
