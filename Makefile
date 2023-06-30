@@ -83,13 +83,21 @@ stop_back:
 
 
 ########### DB ###########
-db_up:
-	db_down
+db_up: db_down
 	@echo "Docker compose up: db image..."
-	@docker-compose --env-file .env --env-file local.env  up -d  db 
+	@docker-compose --env-file .env --env-file local.env -p widgets_db  up -d  
 	@echo "Docker db up!"
 
 db_down:
 	@echo "Docker compose down: db image..."
-	@docker-compose down db
+	@docker-compose  -p widgets_db down
 	@echo "Docker db down!"
+
+########### UTILS  ###########
+copy_env:
+	@echo "Copying env file..."
+	@cat .env | head -1
+	@cp .env ./cmd/api/.env
+	@cp .env ./cmd/web/.env
+
+########### TEST ###########
