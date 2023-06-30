@@ -99,5 +99,8 @@ copy_env:
 	@cat .env | head -1
 	@cp .env ./cmd/api/.env
 	@cp .env ./cmd/web/.env
+	@echo "Copying local env file(not in use yet) ..."
+	@cp local.env ./cmd/api/local.env
+	@cp local.env ./cmd/web/local.env
 
 ########### TEST ###########
