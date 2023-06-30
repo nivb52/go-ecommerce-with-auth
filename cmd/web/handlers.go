@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func (app *application) Liveness(w http.ResponseWriter, r *http.Request) {
@@ -60,14 +63,17 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 
 }
 
-func (app *application) ChargeOne(w http.ResponseWriter, r *http.Request) {
+func (app *application) WidgetById(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	widgetID, _ := strconv.Atoi(id)
 	db := app.DB
-	widget, dbErr := db.GetWidget(1)
+	widget, dbErr := db.GetWidget(widgetID)
 	if dbErr != nil {
 		app.errorLog.Println(dbErr)
 		jsonBytes, _ := json.Marshal("{message: 'Widget Not Found', code: 404}")
 		w.Header().Set("Content-type", "application/json")
 		w.Write(jsonBytes)
+		return
 	}
 
 	data := make(map[string]interface{})
