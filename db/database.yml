@@ -1,13 +1,15 @@
 ---
 development:
   dialect: mysql
+  url: "root:12345678@tcp(localhost:19400)/udemy?parseTime=true&tls=false"
   database: widgets
   user: user
   password: password
   host: 127.0.0.1
+  port: 19400
   pool: 5
   options:
-    migration_table_name: migrations_and_seed
+    migration_table_name: migrations
 
 test:
   url: {{envOr "TEST_DATABASE_URL" "postgres://postgres:postgres@127.0.0.1:5432/db_test?sslmode=disable"}}
