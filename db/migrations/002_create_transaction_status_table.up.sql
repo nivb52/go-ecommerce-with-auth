@@ -2,16 +2,17 @@
 CREATE TABLE IF NOT EXISTS transaction_statuses (
     id INTEGER PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(255),
-    created_at TIMESTAMP DEFAULT  NOT NULL CURRENT_TIMESTAMP,    
-    updated_at TIMESTAMP  ON UPDATE DEFAULT CURRENT_TIMESTAMP
-)
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    
+    updated_at TIMESTAMP  ON UPDATE CURRENT_TIMESTAMP
+);
 
 
 INSERT INTO transaction_statuses (
-    name,
+    name
   )
 VALUES  
- ('Pending')
+ ('Pending'),
  ('Pending'),
  ('Cleared'),
  ('Declined'),

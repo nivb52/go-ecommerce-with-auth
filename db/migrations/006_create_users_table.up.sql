@@ -5,6 +5,9 @@ CREATE TABLE IF NOT EXISTS users (
   last_name VARCHAR(255),
   email VARCHAR(255),
   password VARCHAR(60)
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    
+  updated_at TIMESTAMP  ON UPDATE CURRENT_TIMESTAMP
 );
 
 INSERT INTO users (
@@ -14,4 +17,8 @@ INSERT INTO users (
     password
   )
 VALUES  
-('Admin','User','admin@example.com', '$2a$12$VR1wDmweaF3ZTVgEHiJrNOSi8VcS4j0eamr96A/7iOe8vlum3O3/q');
+('Admin',
+'User',
+'admin@example.com',
+'$2a$12$VR1wDmweaF3ZTVgEHiJrNOSi8VcS4j0eamr96A/7iOe8vlum3O3/q'
+);
