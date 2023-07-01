@@ -11,7 +11,7 @@ cmd = "go build -o ./tmp/api/main.exe ./cmd/api/"
 # Binary file yields from `cmd`.
 bin = "tmp/main"
 # Customize binary.
-full_bin = "./tmp/api"
+full_bin = "./tmp/api/main"
 # Watch these filename extensions.
 include_ext = ["go"]
 # Ignore these filename extensions or directories.
