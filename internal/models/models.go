@@ -38,6 +38,7 @@ type Order struct {
 	ID            int       `json:"id"`
 	WidgetID      int       `json:"widget_id"`
 	TransactionID int       `json:"transaction_id"`
+	CustomerID    int       `json:"customer_id"`
 	StatusID      int       `json:"status_id"`
 	Quantity      int       `json:"quantity"`
 	Amount        int       `json:"amount"`
@@ -66,6 +67,8 @@ type Transaction struct {
 	Amount              int    `json:"amount"`
 	Currency            string `json:"currency"`
 	LastFour            string `json:"last_four"`
+	ExpiryMonth         int    `json:"expiry_month"`
+	ExpiryYear          int    `json:"expiry_year"`
 	BankReturnCode      string `json:"bank_return_code"`
 	TransactionStatusID int    `json:"transaction_statuses_id"`
 
@@ -74,6 +77,17 @@ type Transaction struct {
 }
 
 type User struct {
+	ID        int    `json:"id"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+	Password  string `json:"-"`
+
+	CreatedAt time.Time `json:"-"`
+	UpdateAt  time.Time `json:"-"`
+}
+
+type Customer struct {
 	ID        int    `json:"id"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
