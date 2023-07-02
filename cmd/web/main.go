@@ -61,11 +61,14 @@ func main() {
 	flag.StringVar(&cfg.env, "env", "development", "Application env")
 	flag.StringVar(&cfg.api, "api", "http://localhost:4001", "App url")
 	flag.StringVar(&cfg.db.dsn, "dsn", os.Getenv("DSN"), "Mysql connection string")
+	flag.StringVar(&cfg.stripe.key, "stripe_key", os.Getenv("STRIPE_KEY"), "Stripe payments public key")
+	flag.StringVar(&cfg.stripe.secret, "stripe_secret", os.Getenv("STRIPE_SECRET"), "Stripe payments secret key")
 	flag.Parse()
 
-	// secrets
-	cfg.stripe.key = os.Getenv("STRIPE_KEY")
-	cfg.stripe.secret = os.Getenv("STRIPE_SECRET")
+	// secrets check
+	if len(cfg.stripe.secret) < 10 || len(cfg.stripe.key) < 10 {
+		log.Fatal("missing Stripe Secret Key")
+	}
 
 	// logs
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
