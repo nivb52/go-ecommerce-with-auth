@@ -7,8 +7,9 @@ CREATE TABLE IF NOT EXISTS transactions (
     bank_return_code VARCHAR(255),
     -- transaction_status_id FOREIGN  KEY TO transaction table
     transaction_status_id INTEGER,
+     CONSTRAINT `FK_transactions_transaction_status_id` 
     FOREIGN KEY (transaction_status_id) REFERENCES transaction_statuses(id) 
-        ON DELETE CASCADE, 
+        ON DELETE SET NULL  ON UPDATE NO ACTION, 
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    
     updated_at TIMESTAMP  ON UPDATE CURRENT_TIMESTAMP

@@ -23,12 +23,14 @@ CREATE TABLE IF NOT EXISTS orders (
     FOREIGN  KEY (widget_id) REFERENCES widgets(id),
 
     transaction_id INTEGER NOT NULL,
+    CONSTRAINT `FK_order_transaction_id`
     FOREIGN  KEY (transaction_id) REFERENCES transactions(id) 
-        ON DELETE CASCADE, 
+        ON DELETE SET NULL ON UPDATE NO ACTION, 
 
     status_id INTEGER NOT NULL,
+    CONSTRAINT `FK_order_transaction_id`
     FOREIGN  KEY (status_id) REFERENCES statuses(id) 
-        ON DELETE CASCADE,
+        ON DELETE SET NULL  ON UPDATE NO ACTION,
 
     quantity INTEGER,
     amount INTEGER,
