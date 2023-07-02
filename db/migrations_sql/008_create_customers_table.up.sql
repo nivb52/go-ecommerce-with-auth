@@ -9,7 +9,6 @@ CREATE TABLE customers (
   updated_at TIMESTAMP  ON UPDATE CURRENT_TIMESTAMP
 );
 
-ALTER TABLE orders 
-ADD COLUMN customer_id INTEGER NOT NULL;
-ALTER TABLE orders
-ADD FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE; MYS
+ALTER TABLE orders ADD COLUMN customer_id INTEGER NOT NULL;
+ALTER TABLE orders ADD  CONSTRAINT `FK_order_customer_id`  FOREIGN KEY (customer_id)
+ REFERENCES customers(id)   ON UPDATE NO ACTION; 
