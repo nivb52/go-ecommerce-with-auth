@@ -56,9 +56,13 @@ func (app *application) serve() error {
 }
 
 func main() {
-	errEnv := godotenv.Load("./cmd/web/local.env")
+	errEnv := godotenv.Load(".env")
 	if errEnv != nil {
-		log.Fatal("Error loading .env file ", errEnv)
+		log.Println(":: INFO loading .env file failed:\n", errEnv)
+		errEnv = godotenv.Load("./cmd/web/local.env")
+		if errEnv != nil {
+			log.Println(":: INFO loading local.env file failed:\n", errEnv)
+		}
 	}
 
 	var cfg config
@@ -73,6 +77,7 @@ func main() {
 	// secrets check
 	if len(cfg.stripe.secret) < 10 || len(cfg.stripe.key) < 10 {
 		log.Fatal("missing Stripe Secret Key")
+		os.Exit(2)
 	}
 
 	// logs

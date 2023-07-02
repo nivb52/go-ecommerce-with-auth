@@ -53,7 +53,12 @@ func (app *application) serve() error {
 func main() {
 	envErr := godotenv.Load(".env")
 	if envErr != nil {
-		log.Fatal(":: ENV FILE IS MISSING OR WRONG! Exiting")
+		log.Println(":: INFO loading .env file failed:\n", envErr)
+		envErr := godotenv.Load("./cmd/web/local.env")
+		if envErr != nil {
+			log.Println(":: INFO loading local.env file failed:\n", envErr)
+		}
+		//  log.Fatal(":: ENV FILE IS MISSING OR WRONG! Exiting")
 	}
 
 	var cfg config
