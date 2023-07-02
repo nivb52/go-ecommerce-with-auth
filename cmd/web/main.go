@@ -11,7 +11,8 @@ import (
 	"os"
 	"time"
 
-	_ "github.com/joho/godotenv/autoload"
+	"github.com/joho/godotenv"
+	// _ "github.com/joho/godotenv/autoload"
 )
 
 const version = "1.0.0"
@@ -55,6 +56,11 @@ func (app *application) serve() error {
 }
 
 func main() {
+	errEnv := godotenv.Load("./cmd/web/local.env")
+	if errEnv != nil {
+		log.Fatal("Error loading .env file ", errEnv)
+	}
+
 	var cfg config
 	// run args
 	flag.IntVar(&cfg.port, "port", 4000, "Server port to listen on")
@@ -62,7 +68,6 @@ func main() {
 	flag.StringVar(&cfg.api, "api", "http://localhost:4001", "App url")
 	flag.StringVar(&cfg.db.dsn, "dsn", os.Getenv("DSN"), "Mysql connection string")
 	flag.StringVar(&cfg.stripe.key, "stripe_key", os.Getenv("STRIPE_KEY"), "Stripe payments public key")
-	flag.StringVar(&cfg.stripe.secret, "stripe_secret", os.Getenv("STRIPE_SECRET"), "Stripe payments secret key")
 	flag.Parse()
 
 	// secrets check
@@ -73,6 +78,14 @@ func main() {
 	// logs
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+	// end logs
+
+	conn, dbErr := driver.OpenDB(cfg.db.dsn)
+	if dbErr != nil {
+		errorLog.Fatal(":: DB connction failed, error: ", dbErr)
+	}
+
+	defer conn.Close()
 
 	conn, connErr := driver.OpenDB(cfg.db.dsn)
 	if connErr != nil {
