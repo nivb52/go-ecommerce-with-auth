@@ -52,6 +52,7 @@
             this.event.preventDefault();
             this.event.stopPropagation();
             form.classList.remove("was-validated");
+            form.reportValidity();
             showCardError("Invalid Form");
             return;
         }
