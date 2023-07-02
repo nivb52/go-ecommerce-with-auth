@@ -1,0 +1,3 @@
+
+ALTER TABLE orders DROP COLUMN IF NOT EXISTS customer_id;
+DROP TABLE IF EXISTS customers;
