@@ -10,4 +10,48 @@
     "go.lintOnSave": "file",
     "go.formatTool": "gofmt",
     "git-blame.gitWebUrl": "",
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 3306,
+            "driver": "MySQL",
+            "name": "widgets",
+            "database": "widgets",
+            "username": "user",
+            "password": "password"
+        },
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 19400,
+            "driver": "MySQL",
+            "name": "widgets-win",
+            "database": "udemy",
+            "username": "root",
+            "password": "12345678"
+        },
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 3306,
+            "driver": "MySQL",
+            "name": "widgets-docker-win",
+            "username": "user",
+            "database": "widgets",
+            "password": "password"
+        }
+    ],
 }

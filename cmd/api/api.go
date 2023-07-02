@@ -3,13 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"go-ecommerce-with-auth/internal/driver"
+	"go-ecommerce-with-auth/internal/models"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
-	"github.com/joho/godotenv"
-	//_ "github.com/joho/godotenv/autoload"
+	godotenv "github.com/joho/godotenv"
 )
 
 const version = "1.0.0"
@@ -31,6 +32,7 @@ type application struct {
 	infoLog  *log.Logger
 	errorLog *log.Logger
 	version  string
+	DB       models.DBModel
 }
 
 func (app *application) serve() error {
@@ -49,35 +51,47 @@ func (app *application) serve() error {
 }
 
 func main() {
-	errEnv := godotenv.Load("./cmd/api/.env")
-	if errEnv != nil {
-		log.Fatal("Error loading .env file ", errEnv)
+	envErr := godotenv.Load(".env")
+	if envErr != nil {
+		log.Fatal(":: ENV FILE IS MISSING OR WRONG! Exiting")
 	}
 
 	var cfg config
 	// run args
 	flag.IntVar(&cfg.port, "port", 4001, "Server port to listen on")
 	flag.StringVar(&cfg.env, "env", "development", "Application env")
+	flag.StringVar(&cfg.db.dsn, "dsn", os.Getenv("DSN_API"), "Mysql connection string")
+	flag.StringVar(&cfg.stripe.key, "stripe_key", os.Getenv("STRIPE_KEY"), "Stripe payments public key")
+	flag.StringVar(&cfg.stripe.secret, "stripe_secret", os.Getenv("STRIPE_SECRET"), "Stripe payments secret key")
 	flag.Parse()
 
-	// secrets
-	cfg.stripe.key = os.Getenv("STRIPE_KEY")
-	cfg.stripe.secret = os.Getenv("STRIPE_SECRET")
+	// secrets check
+	if len(cfg.stripe.secret) < 10 || len(cfg.stripe.key) < 10 {
+		log.Fatal("missing Stripe Secret Key")
+	}
 
 	// logs
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+	conn, connErr := driver.OpenDB(cfg.db.dsn)
+	if connErr != nil {
+		fmt.Printf("ENV: DSN_API: %s \n", os.Getenv("DSN_API"))
+		log.Fatal(":: DB connecition Failed! Exiting")
+	}
+	defer conn.Close()
 
 	app := &application{
 		config:   cfg,
 		infoLog:  infoLog,
 		errorLog: errorLog,
 		version:  version,
+		DB:       models.DBModel{DB: conn},
 	}
 
 	err := app.serve()
 	if err != nil {
 		app.errorLog.Println(err)
-		log.Fatal("exiting API")
+		log.Fatal(":: Exiting API")
 	}
 }

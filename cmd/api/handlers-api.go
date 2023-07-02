@@ -5,6 +5,8 @@ import (
 	"go-ecommerce-with-auth/internal/cards"
 	"net/http"
 	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type stripPayload struct {
@@ -41,6 +43,22 @@ func (app *application) GetPaymentIntent(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		app.errorLog.Println(err)
 		return
+	} else if amount <= 0 {
+		app.infoLog.Println(":: INFO: payment is negative or zero")
+		w.Header().Set("Content-Type", "application/json")
+		// w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.WriteHeader(http.StatusBadRequest)
+		j := jsonResponse{
+			OK:      true,
+			Message: "Payment is too low",
+			Content: "Payment of " + payload.Amount + " is too low.",
+		}
+
+		out, err := json.MarshalIndent(j, "", "  ")
+		if err != nil {
+			app.errorLog.Println(":: ERROR parse json failed: ", err)
+		}
+		w.Write(out)
 	}
 
 	card := cards.Card{
@@ -69,6 +87,7 @@ func (app *application) GetPaymentIntent(w http.ResponseWriter, r *http.Request)
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(data)
 	} else {
+		app.infoLog.Println("::INFO Payment failed")
 		j := jsonResponse{
 			OK:      true,
 			Message: msg,
@@ -77,11 +96,32 @@ func (app *application) GetPaymentIntent(w http.ResponseWriter, r *http.Request)
 
 		out, err := json.MarshalIndent(j, "", "  ")
 		if err != nil {
-			app.errorLog.Println(err)
+			app.errorLog.Println(":: ERROR parse json failed: ", err)
 		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Write(out)
 	}
+}
+
+func (app *application) GetWidgetByID(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	widgetID, _ := strconv.Atoi(id)
+
+	widget, err := app.DB.GetWidget(widgetID)
+	if err != nil {
+		// TODO: make globbal not found fnuc
+		app.errorLog.Println(err)
+		jsonBytes, _ := json.Marshal("{message: 'Widget Not Found', code: 404}")
+		w.Header().Set("Content-type", "application/json")
+		w.Write(jsonBytes)
+	}
+
+	out, jsonErr := json.Marshal(widget)
+	if jsonErr != nil {
+		app.errorLog.Println(jsonErr)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(out)
 }

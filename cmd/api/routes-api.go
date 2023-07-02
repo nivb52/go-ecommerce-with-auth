@@ -20,8 +20,11 @@ func (app *application) routes() http.Handler {
 
 	mux.Get("/api/liveness", app.Liveness)
 	mux.Get("/api/liveness/", app.Liveness)
+
 	mux.Post("/api/payment-intent", app.GetPaymentIntent)
 	mux.Post("/api/payment-intent/", app.GetPaymentIntent)
+
+	mux.Get("/api/widget/{id}", app.GetWidgetByID)
 
 	return mux
 }

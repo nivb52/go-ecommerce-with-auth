@@ -9,11 +9,11 @@ tmp_dir = "tmp"
 # Just plain old shell command. You could use `make` as well.
 cmd = "go build -o ./tmp/web/main ./cmd/web/"
 # Binary file yields from `cmd`.
-# bin = "tmp main"
+# bin =  
 # Customize binary.
 full_bin = "./tmp/web/main"
 # Watch these filename extensions.
-include_ext = ["go", "tpl", "tmpl", "html", "gohtml", "GoHTML", "GOHTML", "GoHtml"]
+include_ext = ["go", "tpl", "tmpl", "html", "gohtml", "GoHTML", "GOHTML", "GoHtml", "env"]
 # Ignore these filename extensions or directories.
 exclude_dir = ["cmd/api", "assets", "tmp", "vendor", "dist", "run", "frontend/node_modules"]
 # Watch these directories if you specified.

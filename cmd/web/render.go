@@ -19,11 +19,18 @@ type templateData struct {
 	Error           string
 	IsAuthenticated int
 	API             string
-	STRIPEPK        string
 	CSSVersion      string
+	StripePublicKey string
 }
 
-var functions = template.FuncMap{}
+var functions = template.FuncMap{
+	"formatCurrency": formatCurrency,
+}
+
+func formatCurrency(n int) string {
+	f := float32(n / 100)
+	return fmt.Sprintf("$%.2f", f)
+}
 
 // Directive FolderName
 //
@@ -32,7 +39,7 @@ var templateFS embed.FS
 
 func (app *application) addDefaultData(td *templateData, r *http.Request) *templateData {
 	td.API = app.config.api
-	td.STRIPEPK = app.config.stripe.key
+	td.StripePublicKey = app.config.stripe.key
 	td.CSSVersion = app.cssVersion
 	return td
 }

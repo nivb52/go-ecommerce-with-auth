@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"go-ecommerce-with-auth/internal/driver"
+	"go-ecommerce-with-auth/internal/models"
 	"html/template"
 	"log"
 	"net/http"
@@ -37,6 +38,7 @@ type application struct {
 	templateCache map[string]*template.Template
 	version       string
 	cssVersion    string
+	DB            models.DBModel
 }
 
 func (app *application) serve() error {
@@ -64,13 +66,14 @@ func main() {
 	flag.IntVar(&cfg.port, "port", 4000, "Server port to listen on")
 	flag.StringVar(&cfg.env, "env", "development", "Application env")
 	flag.StringVar(&cfg.api, "api", "http://localhost:4001", "App url")
-	flag.StringVar(&cfg.db.dsn, "mysql", os.Getenv("MYSQL"), "connection string to mysql")
+	flag.StringVar(&cfg.db.dsn, "dsn", os.Getenv("DSN"), "Mysql connection string")
+	flag.StringVar(&cfg.stripe.key, "stripe_key", os.Getenv("STRIPE_KEY"), "Stripe payments public key")
 	flag.Parse()
 
-	// secrets
-	//cfg.db.dsn = os.Getenv("MYSQL")
-	cfg.stripe.key = os.Getenv("STRIPE_KEY")
-	cfg.stripe.secret = os.Getenv("STRIPE_SECRET")
+	// secrets check
+	if len(cfg.stripe.secret) < 10 || len(cfg.stripe.key) < 10 {
+		log.Fatal("missing Stripe Secret Key")
+	}
 
 	// logs
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
@@ -84,6 +87,11 @@ func main() {
 
 	defer conn.Close()
 
+	conn, connErr := driver.OpenDB(cfg.db.dsn)
+	if connErr != nil {
+		log.Fatal(":: DB connecition Failed! Exiting")
+	}
+	defer conn.Close()
 	tc := make(map[string]*template.Template)
 
 	app := &application{
@@ -92,6 +100,8 @@ func main() {
 		errorLog:      errorLog,
 		templateCache: tc,
 		version:       version,
+		cssVersion:    cssVersion,
+		DB:            models.DBModel{DB: conn},
 	}
 
 	err := app.serve()

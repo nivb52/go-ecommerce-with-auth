@@ -1,0 +1,2 @@
+
+ALTER TABLE widgets ADD COLUMN image VARCHAR(400);
