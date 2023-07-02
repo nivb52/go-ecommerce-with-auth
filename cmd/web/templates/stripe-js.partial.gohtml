@@ -31,6 +31,12 @@
         cardMessages.innerText = msg;
     }
 
+     function hideCardError() {
+        cardMessages.innerText = '';
+        cardMessages.classList.remove("alert-danger");
+        cardMessages.classList.add("d-none");
+    }
+
     function showCardSuccess() {
         cardMessages.classList.remove("alert-danger");
         cardMessages.classList.add("alert-success");
@@ -46,6 +52,7 @@
             this.event.stopPropagation();
             form.classList.remove("was-validated");
             showCardError("Invalid amount");
+            setTimeout(hideCardError, 2000);
             return;
         }
         if (form.checkValidity() === false) {
@@ -54,6 +61,7 @@
             form.classList.remove("was-validated");
             form.reportValidity();
             showCardError("Invalid Form");
+            setTimeout(hideCardError, 2000);
             return;
         }
 
