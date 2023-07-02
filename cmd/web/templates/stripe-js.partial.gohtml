@@ -8,8 +8,11 @@
     const cardMessages = document.getElementById("card-messages");
     const payButton = document.getElementById("pay-button");
     const processing = document.getElementById("processing-payment");
-
-    stripe = Stripe({{.STRIPEpublick}});
+    const pk = {{.StripePublicKey}}
+    if (!pk) {
+        throw new Error ('Invalid Strip PK, stripe PK is required')
+    }
+    stripe = Stripe(pk);
 
     function hidePayButton() {
         payButton.classList.add("d-none");
@@ -35,7 +38,72 @@
         cardMessages.innerText = "Transaction successful";
     }
 
-   
+   function val() {
+        const form = document.getElementById("charge_form");
+        const amountAsNumber = parseFloat(document.getElementById("amount").value)  * 100
+        if (isNaN(amountAsNumber) || amountAsNumber === 0 ) {
+            this.event.preventDefault();
+            this.event.stopPropagation();
+            form.classList.remove("was-validated");
+            showCardError("Invalid amount");
+            return;
+        }
+        if (form.checkValidity() === false) {
+            this.event.preventDefault();
+            this.event.stopPropagation();
+            form.classList.remove("was-validated");
+            showCardError("Invalid Form");
+            return;
+        }
+
+        form.classList.add("was-validated");
+        hidePayButton();
+        
+        const amountToCharge = String(amountAsNumber)
+        const payload = {
+            amount: amountToCharge,
+            currency: 'USD'
+        }
+        postData('payment-intent', payload)
+        .then(data => {  // JSON data parsed by `data.json()` call
+            // https://stripe.com/docs/payments/accept-a-payment?ui=elements&client=html
+            if (!data.client_secret) console.warn('data-secret is missing');
+            stripe.confirmCardPayment(data.client_secret, {
+                payment_method: {
+                    card: card, // = elements.getElement(CardElement),
+                    billing_details: {
+                        name: document.getElementById("cardholder-name").value,
+                    }
+                }
+            }).then(function(result) {
+                if (result.error) {
+                    // card declined, or something went wrong with the card
+                    showCardError(result.error.message);
+                    showPayButtons();
+                } else if(result.paymentIntent) {
+                    if (result.paymentIntent.status === "succeeded") {
+                        // we have charged the card
+                        document.getElementById("payment_method").value = result.paymentIntent?.payment_method_types[0];
+                        document.getElementById("payment_intent").value = result.paymentIntent?.id;
+                        document.getElementById("payment_amount").value = result.paymentIntent?.amount;
+                        document.getElementById("payment_currency").value = result.paymentIntent?.currency;
+
+                        processing.classList.add("d-none");
+                        showCardSuccess();
+                        document.getElementById("charge_form").submit();
+                    }
+                }
+            }).catch(err => {
+                console.error(err);
+                // due it may not be cardError but server error or JS code error
+                throw(err)
+            });
+        }).catch(err  => {
+            console.error(err);
+            showCardError("Invalid response from payment gateway!");
+            showPayButtons();
+        });
+    }
 
     (function() {
         // create stripe & elements
