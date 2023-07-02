@@ -13,4 +13,8 @@
     <p>Payment Method: {{index .Data "pm"}}</p>
     <p>Payment Amount: {{index .Data "pa"}}</p>
     <p>Currency: {{index .Data "pc"}}</p>
+
+    <p>Last 4 Digit: {{index .Data "last_four"}}</p>
+    <p>Bank return code: {{index .Data "bank_return_code"}}</p>
+    <p>Expiry: {{index .Data "expiry_month"}}/{{index .Data "expiry_year"}}</p>
 {{end}}
