@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 )
 
@@ -105,4 +106,80 @@ func (m *DBModel) GetWidget(id int) (Widget, error) {
 	}
 
 	return widget, nil
+}
+
+// InsertTransaction insert new txn, and return its id
+func (m *DBModel) InsertTransaction(txn Transaction) (int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	quary := `
+		INSERT INTO transactions 
+		(amount, currency, last_four, bank_return_code, transaction_statuses_id)
+	VALUES (?, ?, ?, ?, ?)
+	`
+
+	result, err := m.DB.ExecContext(ctx, quary,
+		txn.Amount,
+		txn.Currency,
+		txn.LastFour,
+		txn.BankReturnCode,
+		txn.TransactionStatusID,
+	)
+	if err != nil {
+		fmt.Println(":: ERROR SQL:  Transaction execution failed due:\n", err)
+		return 0, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		fmt.Println(":: ERROR SQL: Transaction executed but failed to retrive last inserted id, err: \n", err)
+		return 0, err
+	}
+
+	return int(id), nil
+}
+
+// InsertOrder insert new txn, and return its id
+func (m *DBModel) InsertOrder(ordr Order) (int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	quary := `
+		INSERT INTO orders 
+		(widget_id, transaction_id, status_id, quantity, amount)
+	VALUES (?, ?, ?, ?, ?)
+	`
+
+	result, err := m.DB.ExecContext(ctx, quary,
+		ordr.WidgetID,
+		ordr.TransactionID,
+		ordr.StatusID,
+		ordr.Quantity,
+		ordr.Amount,
+	)
+	if err != nil {
+		fmt.Println(":: ERROR SQL:  Order execution failed due:\n", err)
+		return 0, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		fmt.Println(":: ERROR SQL: Order executed but failed to retrive last inserted id, err: \n", err)
+		return 0, err
+	}
+
+	return int(id), nil
+}
+
+// insertQuary
+func (m *DBModel) insertQuery(q, data, name string) (sql.Result, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	result, err := m.DB.ExecContext(ctx, q, data)
+	if err != nil {
+		fmt.Println(":: ERROR SQL:  ", name, " execution failed due:\n", err)
+		return result, err
+	}
+
+	return result, nil
 }
