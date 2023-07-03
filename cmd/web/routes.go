@@ -9,6 +9,7 @@ import (
 
 func (app *application) routes() http.Handler {
 	mux := chi.NewRouter()
+
 	mux.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*", "http://localhost:4000", "localhost:4001"}, //FOR DEV ENV
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -16,6 +17,8 @@ func (app *application) routes() http.Handler {
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
+	mux.Use(SessionLoad)
+
 	mux.Get("/liveness", app.Liveness)
 	mux.Get("/", app.Home)
 	mux.Get("/virtual-terminal", app.VirtualTerminal)

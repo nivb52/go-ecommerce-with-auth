@@ -11,12 +11,15 @@ import (
 	"os"
 	"time"
 
+	"github.com/alexedwards/scs/v2"
 	"github.com/joho/godotenv"
 	// _ "github.com/joho/godotenv/autoload"
 )
 
 const version = "1.0.0"
 const cssVersion = "1"
+
+var sessionManager *scs.SessionManager
 
 type config struct {
 	port int
@@ -39,6 +42,7 @@ type application struct {
 	version       string
 	cssVersion    string
 	DB            models.DBModel
+	Session       *scs.SessionManager
 }
 
 func (app *application) serve() error {
@@ -92,6 +96,10 @@ func main() {
 
 	defer conn.Close()
 
+	//set up session
+	sessionManager = scs.New()
+	sessionManager.Lifetime = 24 * time.Hour
+
 	conn, connErr := driver.OpenDB(cfg.db.dsn)
 	if connErr != nil {
 		log.Fatal(":: DB connecition Failed! Exiting")
@@ -107,6 +115,7 @@ func main() {
 		version:       version,
 		cssVersion:    cssVersion,
 		DB:            models.DBModel{DB: conn},
+		Session:       sessionManager,
 	}
 
 	err := app.serve()
