@@ -92,7 +92,6 @@ type Customer struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
-	Password  string `json:"-"`
 
 	CreatedAt time.Time `json:"-"`
 	UpdateAt  time.Time `json:"-"`
@@ -184,14 +183,41 @@ func (m *DBModel) InsertOrder(ordr Order) (int, error) {
 	return int(id), nil
 }
 
+// InsertOrder insert new txn, and return its id
+func (m *DBModel) InsertCustomer(c Customer) (int, error) {
+	quary := `
+		INSERT INTO orders 
+		(widget_id, transaction_id, status_id, quantity, amount)
+	VALUES (?, ?, ?, ?, ?)
+	`
+	result, err := m.insertQuery(quary,
+		c.FirstName,
+		c.LastName,
+		c.Email,
+	)
+
+	if err != nil {
+		fmt.Println(":: ERROR SQL:  Order execution failed due:\n", err)
+		return 0, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		fmt.Println(":: ERROR SQL: Order executed but failed to retrive last inserted id, err: \n", err)
+		return 0, err
+	}
+
+	return int(id), nil
+}
+
 // insertQuary
-func (m *DBModel) insertQuery(q, data, name string) (sql.Result, error) {
+func (m *DBModel) insertQuery(q, logName string, data ...any) (sql.Result, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	result, err := m.DB.ExecContext(ctx, q, data)
 	if err != nil {
-		fmt.Println(":: ERROR SQL:  ", name, " execution failed due:\n", err)
+		fmt.Println(":: ERROR SQL:  ", logName, " execution failed due:\n", err)
 		return result, err
 	}
 
