@@ -187,7 +187,7 @@ func (m *DBModel) InsertOrder(ordr Order) (int, error) {
 func (m *DBModel) InsertCustomer(c Customer) (int, error) {
 	quary := `
 		INSERT INTO orders 
-		(widget_id, transaction_id, status_id, quantity, amount)
+		(first_name, last_name, email)
 	VALUES (?, ?, ?, ?, ?)
 	`
 	result, err := m.insertQuery(quary,
