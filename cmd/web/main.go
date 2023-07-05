@@ -39,6 +39,7 @@ type application struct {
 	config        config
 	infoLog       *log.Logger
 	errorLog      *log.Logger
+	debugLog      *log.Logger
 	templateCache map[string]*template.Template
 	version       string
 	cssVersion    string
@@ -62,19 +63,24 @@ func (app *application) serve() error {
 
 func main() {
 	// DEBUG ENV WITH: printCurrentFolderContent()
+	env := os.Getenv("ENV")
+	if env == "" {
+		env = "development"
+	}
+
 	errEnv := godotenv.Load("./.env")
 	if errEnv != nil {
-		log.Println(":: INFO loading .env file failed:\n", errEnv)
+		log.Println(":: PRE RUNNING: loading .env file failed:\n", errEnv)
 		errEnv = godotenv.Load("./cmd/web/.env")
 		if errEnv != nil {
-			log.Println(":: INFO loading local.env file failed:\n", errEnv)
+			log.Println(":: PRE RUNNING: loading local.env file failed:\n", errEnv)
 		}
 	}
 
 	var cfg config
 	// run args
 	flag.IntVar(&cfg.port, "port", 4000, "Server port to listen on")
-	flag.StringVar(&cfg.env, "env", "development", "Application env")
+	flag.StringVar(&cfg.env, "env", env, "Application Environment variable")
 	flag.StringVar(&cfg.api, "api", "http://localhost:4001", "App url")
 	flag.StringVar(&cfg.db.dsn, "dsn", os.Getenv("DSN"), "Mysql connection string")
 	flag.StringVar(&cfg.stripe.key, "stripe_key", os.Getenv("STRIPE_KEY"), "Stripe payments public key")
@@ -90,6 +96,13 @@ func main() {
 	// logs
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+	var debugLog *log.Logger
+	if cfg.env == "development" || cfg.env == "dev" {
+		debugLog = log.New(os.Stdout, "DEBUG: ", log.LstdFlags)
+	} else {
+		// Create a logger with a discard output (i.e., no logging)
+		debugLog = log.New(ioutil.Discard, "", log.LstdFlags)
+	}
 	// end logs
 
 	conn, dbErr := driver.OpenDB(cfg.db.dsn)
@@ -114,6 +127,7 @@ func main() {
 		config:        cfg,
 		infoLog:       infoLog,
 		errorLog:      errorLog,
+		debugLog:      debugLog,
 		templateCache: tc,
 		version:       version,
 		cssVersion:    cssVersion,
