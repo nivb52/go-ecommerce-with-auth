@@ -152,7 +152,7 @@ func (m *DBModel) InsertTransaction(txn Transaction) (int, error) {
 	return int(id), nil
 }
 
-// InsertOrder insert new txn, and return its id
+// InsertOrder insert new order, and return its id
 func (m *DBModel) InsertOrder(ordr Order) (int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -183,7 +183,7 @@ func (m *DBModel) InsertOrder(ordr Order) (int, error) {
 	return int(id), nil
 }
 
-// InsertOrder insert new txn, and return its id
+// InsertCustomer insert new customer, and return its id
 func (m *DBModel) InsertCustomer(c Customer) (int, error) {
 	quary := `
 		INSERT INTO orders 
