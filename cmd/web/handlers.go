@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"go-ecommerce-with-auth/internal/cards"
+	"go-ecommerce-with-auth/internal/models"
 	"net/http"
 	"os"
 	"strconv"
@@ -45,6 +46,8 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 	}
 
 	// read posted data
+	customerFirstName := r.Form.Get("first_name")
+	customerLastName := r.Form.Get("last_name")
 	cardHolder := r.Form.Get("cardholder_name")
 	email := r.Form.Get("email")
 	paymentIntent := r.Form.Get("payment_intent")
@@ -74,7 +77,13 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 	expiryMonth := pm.Card.ExpMonth
 	expiryYear := pm.Card.ExpYear
 
-	//create new customer
+	// create new customer
+	customerID, err := app.SaveCustomer(customerFirstName, customerLastName, email)
+	if err != nil {
+		app.errorLog.Println("::ERROR : failed to save customer to DB due to:\n ", err)
+	}
+	app.infoLog.Println(":: INFO: customer has been created with ID: ", customerID)
+
 	// create new transaction
 	// create new order
 
@@ -124,4 +133,20 @@ func (app *application) WidgetById(w http.ResponseWriter, r *http.Request) {
 		app.errorLog.Println(err)
 	}
 
+}
+
+func (app *application) SaveCustomer(firstName string, lastName string, email string) (int, error) {
+	customer := models.Customer{
+		FirstName: firstName,
+		LastName:  lastName,
+		Email:     email,
+	}
+
+	tables := models.NewModels(app.DB.DB)
+	id, err := tables.DB.InsertCustomer(customer)
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }

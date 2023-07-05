@@ -31,17 +31,29 @@ name="charge_form" id="charge_form"
 class="d-block needs-validation charge-form"
 autocomplete="off" novalidate="">
 
+    <div class="mb-3">
+        <label for="first-name" class="form-label">First Name</label>
+        <input type="text" class="form-control" id="first-name" name="first_name"
+         value="test-user"   minlength="2" maxlength="50"  required="" autocomplete="first-name-new">
+    </div>
+    
+    <div class="mb-3">
+        <label for="last-name" class="form-label">Last Name</label>
+        <input type="text" class="form-control" id="last-name" name="last_name"
+         value="test-user"   minlength="2" maxlength="50"  required="" autocomplete="last-name-new">
+    </div>
 
     <div class="mb-3">
-        <label for="cardholder-name" class="form-label">Cardholder Name</label>
+        <label for="cardholder-name" class="form-label">Name On Card</label>
         <input type="text" class="form-control" id="cardholder-name" name="cardholder_name"
          value="test-user"   minlength="2" maxlength="50"  required="" autocomplete="cardholder-name-new">
     </div>
 
     <div class="mb-3">
-        <label for="cardholder-email" class="form-label">Cardholder Email</label>
-        <input type="email" class="form-control" id="cardholder-email" name="email"
-           value="test-user@gmail.com" required="" autocomplete="cardholder-email-new">
+        <!-- agreed it may not be the email of the cardholder -->
+        <label for="email" class="form-label">Email</label> 
+        <input type="email" class="form-control" id="email" name="email"
+           value="test-user@gmail.com" required="" autocomplete="email-new">
     </div>
 
     <div class="mb-3">
