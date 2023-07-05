@@ -6,6 +6,7 @@ import (
 	"go-ecommerce-with-auth/internal/driver"
 	"go-ecommerce-with-auth/internal/models"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -60,10 +61,11 @@ func (app *application) serve() error {
 }
 
 func main() {
-	errEnv := godotenv.Load(".env")
+	// DEBUG ENV WITH: printCurrentFolderContent()
+	errEnv := godotenv.Load("./.env")
 	if errEnv != nil {
 		log.Println(":: INFO loading .env file failed:\n", errEnv)
-		errEnv = godotenv.Load("./cmd/web/local.env")
+		errEnv = godotenv.Load("./cmd/web/.env")
 		if errEnv != nil {
 			log.Println(":: INFO loading local.env file failed:\n", errEnv)
 		}
@@ -76,11 +78,12 @@ func main() {
 	flag.StringVar(&cfg.api, "api", "http://localhost:4001", "App url")
 	flag.StringVar(&cfg.db.dsn, "dsn", os.Getenv("DSN"), "Mysql connection string")
 	flag.StringVar(&cfg.stripe.key, "stripe_key", os.Getenv("STRIPE_KEY"), "Stripe payments public key")
+	flag.StringVar(&cfg.stripe.secret, "stripe_secret", os.Getenv("STRIPE_SECRET"), "Stripe payments secret key")
 	flag.Parse()
 
 	// secrets check
-	if len(cfg.stripe.secret) < 10 || len(cfg.stripe.key) < 10 {
-		log.Fatal("missing Stripe Secret Key")
+	if len(cfg.stripe.secret) < 5 || len(cfg.stripe.key) < 5 {
+		log.Fatal("missing Stripe Secret or Public Key, exiting ... ")
 		os.Exit(2)
 	}
 
@@ -123,4 +126,32 @@ func main() {
 		app.errorLog.Println(err)
 		log.Fatal("exiting")
 	}
+}
+
+func printCurrentFolderContent() {
+	// Get the current directory
+	currentDir := "./"
+
+	// Read the directory content
+	files, err := ioutil.ReadDir(currentDir)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Iterate over the files and directories
+	for _, file := range files {
+		fmt.Println(file.Name())
+	}
+
+	filePath := "./.env"
+
+	// Read the file contents
+	content, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Convert the file contents to a string and print it
+	fileContent := string(content)
+	fmt.Println(fileContent)
 }
