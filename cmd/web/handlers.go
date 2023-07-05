@@ -54,7 +54,7 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 	paymentMethod := r.Form.Get("payment_method")
 	paymentAmount := r.Form.Get("payment_amount")
 	paymentCurrency := r.Form.Get("payment_currency")
-	_, detailedErr := convertAtoi(r.Form.Get("product_id"))
+	widgetId, detailedErr := convertAtoi(r.Form.Get("product_id"))
 	if detailedErr != nil {
 		app.errorLog.Println("::ERROR : failed to convert string to int:\n ", detailedErr)
 		return
@@ -94,6 +94,37 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 	if detailedErr != nil {
 		app.errorLog.Println("failed to convert string to int:\n ", detailedErr)
 		return
+	}
+
+	// create new transaction
+	if customerSqlErr == nil {
+		txnID, err := app.SaveTxn(
+			amount,
+			paymentCurrency,
+			lastFour,
+			int(expiryMonth),
+			int(expiryYear),
+			bankReturnCode,
+			2, //CLEARED
+		)
+		if err != nil {
+			app.errorLog.Println("::ERROR : failed to save transaction to DB due to:\n ", err)
+		}
+		app.infoLog.Println(":: INFO: transaction has been created with ID: ", txnID)
+
+		// create new order
+		orderID, err := app.SaveOrder(
+			widgetId,
+			txnID,
+			customerID,
+			1, // CLEARED
+			1, // WE allow only 1 quantity at this time
+			amount,
+		)
+		if err != nil {
+			app.errorLog.Println("::ERROR : failed to save order to DB due to:\n ", err)
+		}
+		app.infoLog.Println(":: INFO: order has been created with ID: ", orderID)
 	}
 
 	data := make(map[string]interface{})
