@@ -3,7 +3,8 @@ package models
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"log"
+	"os"
 	"time"
 )
 
@@ -97,6 +98,9 @@ type Customer struct {
 	UpdateAt  time.Time `json:"-"`
 }
 
+var errorLog = log.New(os.Stdout, ":: ERROR SQL:\t", log.Ltime)
+var sillyLog = log.New(os.Stdout, ":: Silly:\t", log.Ltime)
+
 func (m *DBModel) GetWidget(id int) (Widget, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -127,7 +131,7 @@ func (m *DBModel) InsertTransaction(txn Transaction) (int, error) {
 	defer cancel()
 	quary := `
 		INSERT INTO transactions 
-		(amount, currency, last_four, bank_return_code, transaction_statuses_id)
+		(amount, currency, last_four, bank_return_code, transaction_status_id)
 	VALUES (?, ?, ?, ?, ?)
 	`
 
@@ -139,13 +143,13 @@ func (m *DBModel) InsertTransaction(txn Transaction) (int, error) {
 		txn.TransactionStatusID,
 	)
 	if err != nil {
-		fmt.Println(":: ERROR SQL:  Transaction execution failed due:\n", err)
+		errorLog.Println("Transaction execution failed due:\n", err)
 		return 0, err
 	}
 
 	id, err := result.LastInsertId()
 	if err != nil {
-		fmt.Println(":: ERROR SQL: Transaction executed but failed to retrive last inserted id, err: \n", err)
+		errorLog.Println("Transaction executed but failed to retrive last inserted id, err: \n", err)
 		return 0, err
 	}
 
@@ -154,29 +158,32 @@ func (m *DBModel) InsertTransaction(txn Transaction) (int, error) {
 
 // InsertOrder insert new order, and return its id
 func (m *DBModel) InsertOrder(ordr Order) (int, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
 	quary := `
 		INSERT INTO orders 
-		(widget_id, transaction_id, status_id, quantity, amount)
-	VALUES (?, ?, ?, ?, ?)
+		(widget_id, transaction_id, customer_id, 
+			status_id, quantity, amount
+		)
+		VALUES (?, ?, ?, 
+				?, ?, ?
+			)
 	`
-
-	result, err := m.DB.ExecContext(ctx, quary,
+	result, err := m.insertQuery(quary, "order",
 		ordr.WidgetID,
 		ordr.TransactionID,
+		ordr.CustomerID,
 		ordr.StatusID,
 		ordr.Quantity,
 		ordr.Amount,
 	)
+
 	if err != nil {
-		fmt.Println(":: ERROR SQL:  Order execution failed due:\n", err)
+		sillyLog.Println("Order execution failed due")
 		return 0, err
 	}
 
 	id, err := result.LastInsertId()
 	if err != nil {
-		fmt.Println(":: ERROR SQL: Order executed but failed to retrive last inserted id, err: \n", err)
+		errorLog.Println("Order executed but failed to retrive last inserted id, err: \n", err)
 		return 0, err
 	}
 
@@ -186,24 +193,24 @@ func (m *DBModel) InsertOrder(ordr Order) (int, error) {
 // InsertCustomer insert new customer, and return its id
 func (m *DBModel) InsertCustomer(c Customer) (int, error) {
 	quary := `
-		INSERT INTO orders 
+		INSERT INTO customers 
 		(first_name, last_name, email)
-	VALUES (?, ?, ?, ?, ?)
+	VALUES (?, ?, ?)
 	`
-	result, err := m.insertQuery(quary,
+	result, err := m.insertQuery(quary, "customer",
 		c.FirstName,
 		c.LastName,
 		c.Email,
 	)
 
 	if err != nil {
-		fmt.Println(":: ERROR SQL:  Order execution failed due:\n", err)
+		sillyLog.Println("Customer execution failed")
 		return 0, err
 	}
 
 	id, err := result.LastInsertId()
 	if err != nil {
-		fmt.Println(":: ERROR SQL: Order executed but failed to retrive last inserted id, err: \n", err)
+		errorLog.Println("Customer executed but failed to retrive last inserted id, err: \n", err)
 		return 0, err
 	}
 
@@ -211,13 +218,13 @@ func (m *DBModel) InsertCustomer(c Customer) (int, error) {
 }
 
 // insertQuary
-func (m *DBModel) insertQuery(q, logName string, data ...any) (sql.Result, error) {
+func (m *DBModel) insertQuery(query, logAnnouncment string, data ...any) (sql.Result, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	result, err := m.DB.ExecContext(ctx, q, data)
+	result, err := m.DB.ExecContext(ctx, query, data...)
 	if err != nil {
-		fmt.Println(":: ERROR SQL:  ", logName, " execution failed due:\n", err)
+		errorLog.Println(logAnnouncment, " execution failed due:\n", err)
 		return result, err
 	}
 
