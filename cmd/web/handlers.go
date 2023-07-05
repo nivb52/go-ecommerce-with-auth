@@ -54,6 +54,11 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 	paymentMethod := r.Form.Get("payment_method")
 	paymentAmount := r.Form.Get("payment_amount")
 	paymentCurrency := r.Form.Get("payment_currency")
+	_, detailedErr := convertAtoi(r.Form.Get("product_id"))
+	if detailedErr != nil {
+		app.errorLog.Println("::ERROR : failed to convert string to int:\n ", detailedErr)
+		return
+	}
 
 	card := cards.Card{
 		Secret: app.config.stripe.secret,
@@ -68,37 +73,44 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 
 	pm, err := card.GetPaymentMethod(paymentMethod)
 	if err != nil {
-		app.infoLog.Println(" ::ERROR failed to get payment method")
-		app.errorLog.Println(err)
+		app.errorLog.Println("failed to get payment method, due to: \n", err)
 		return
 	}
 
 	lastFour := pm.Card.Last4
 	expiryMonth := pm.Card.ExpMonth
 	expiryYear := pm.Card.ExpYear
+	bankReturnCode := pi.Charges.Data[0].ID
 
 	// create new customer
-	customerID, err := app.SaveCustomer(customerFirstName, customerLastName, email)
+	customerID, customerSqlErr := app.SaveCustomer(customerFirstName, customerLastName, email)
 	if err != nil {
-		app.errorLog.Println("::ERROR : failed to save customer to DB due to:\n ", err)
-	}
-	app.infoLog.Println(":: INFO: customer has been created with ID: ", customerID)
+		app.errorLog.Println("failed to save customer to DB due to:\n ", customerSqlErr)
 
-	// create new transaction
-	// create new order
+	}
+	app.infoLog.Println("customer has been created with ID: ", customerID)
+
+	amount, detailedErr := convertAtoi(paymentAmount)
+	if detailedErr != nil {
+		app.errorLog.Println("failed to convert string to int:\n ", detailedErr)
+		return
+	}
 
 	data := make(map[string]interface{})
-	data["cardholder"] = cardHolder
 	data["email"] = email
+	data["first_name"] = customerFirstName
+	data["last_name"] = customerLastName
+
+	data["cardholder"] = cardHolder
 	data["pi"] = paymentIntent
 	data["pm"] = paymentMethod
-	data["pa"] = paymentAmount
+	data["pa"] = amount
 	data["pc"] = paymentCurrency
 
 	data["last_four"] = lastFour
 	data["expiry_month"] = expiryMonth
 	data["expiry_year"] = expiryYear
-	data["bank_return_code"] = pi.Charges.Data[0].ID // bank return code
+	data["bank_return_code"] = bankReturnCode
 
 	// should write this data to session, and then redirect user to new page?
 
@@ -125,7 +137,7 @@ func (app *application) WidgetById(w http.ResponseWriter, r *http.Request) {
 
 	data := make(map[string]interface{})
 	data["widget"] = widget
-
+	app.debugLog.Println("widget.Price ", widget.Price)
 	err := app.renderTemplate(w, r, "buy-once", &templateData{
 		Data: data,
 	}, "stripe-js")
@@ -149,4 +161,71 @@ func (app *application) SaveCustomer(firstName string, lastName string, email st
 	}
 
 	return id, nil
+}
+
+func (app *application) SaveTxn(amount int,
+	currency string,
+	lastFour string,
+	expiryMonth int,
+	expiryYear int,
+	bankReturnCode string,
+	transactionStatusId int,
+) (int, error) {
+
+	txn := models.Transaction{
+		Amount:              amount,
+		Currency:            currency,
+		LastFour:            lastFour,
+		ExpiryMonth:         expiryMonth,
+		ExpiryYear:          expiryYear,
+		BankReturnCode:      bankReturnCode,
+		TransactionStatusID: transactionStatusId,
+	}
+
+	tables := models.NewModels(app.DB.DB)
+	id, err := tables.DB.InsertTransaction(txn)
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
+func (app *application) SaveOrder(widgetId int,
+	transactionId int,
+	customerId int,
+	statusId int,
+	quantity int,
+	amount int,
+) (int, error) {
+
+	ordr := models.Order{
+		WidgetID:      widgetId,
+		TransactionID: transactionId,
+		CustomerID:    customerId,
+		StatusID:      statusId,
+		Quantity:      quantity,
+		Amount:        amount,
+	}
+
+	tables := models.NewModels(app.DB.DB)
+	id, err := tables.DB.InsertOrder(ordr)
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
+func convertAtoi(n string) (int, error) {
+	res, err := strconv.Atoi(n)
+	if err != nil {
+		detailedErr := &strconv.NumError{
+			Num:  n,
+			Err:  err,
+			Func: "Atoi",
+		}
+		return 0, detailedErr
+	}
+	return res, nil
 }
