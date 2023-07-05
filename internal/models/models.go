@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"log"
 	"os"
+	"regexp"
 	"time"
 )
 
@@ -221,6 +222,29 @@ func (m *DBModel) InsertCustomer(c Customer) (int, error) {
 func (m *DBModel) insertQuery(query, logAnnouncment string, data ...any) (sql.Result, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
+
+	reValues := regexp.MustCompile(`(?i)values\s{1,}\(`)
+	testReValuesExists := reValues.FindStringIndex(query)
+	if len(testReValuesExists) > 0 {
+		updatedField := "updated_at, "
+		createdField := "created_at, "
+
+		// Find the position to insert the updated_at and created_at fields
+		re := regexp.MustCompile(`(?i)^\s*insert\s+into\s{1,*}\w+\s*\(`)
+		match := re.FindString(query)
+		insertPos := len(match)
+
+		// Insert the updated_at and created_at fields into the query
+		query = query[:insertPos] + updatedField + createdField + query[insertPos:]
+
+		// Find the position to insert the updated_at and created_at values
+		matchValues := reValues.FindStringIndex(query)
+		if len(matchValues) > 0 {
+			insertValuesPos := matchValues[1]
+			nowValues := "NOW(), NOW(), "
+			query = query[:insertValuesPos] + nowValues + query[insertValuesPos:]
+		}
+	}
 
 	result, err := m.DB.ExecContext(ctx, query, data...)
 	if err != nil {
