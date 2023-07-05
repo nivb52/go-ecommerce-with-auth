@@ -94,8 +94,8 @@ func main() {
 	}
 
 	// logs
-	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
-	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+	infoLog := log.New(os.Stdout, "::INFO :\t", log.Ldate|log.Ltime)
+	errorLog := log.New(os.Stdout, "::ERROR :\t", log.Ldate|log.Ltime|log.Lshortfile)
 	var debugLog *log.Logger
 	if cfg.env == "development" || cfg.env == "dev" {
 		debugLog = log.New(os.Stdout, "DEBUG: ", log.LstdFlags)
