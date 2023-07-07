@@ -56,7 +56,7 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 	paymentCurrency := r.Form.Get("payment_currency")
 	widgetId, detailedErr := convertAtoi(r.Form.Get("product_id"))
 	if detailedErr != nil {
-		app.errorLog.Println("::ERROR : failed to convert string to int:\n ", detailedErr)
+		app.errorLog.Println("failed to convert string to int:\n ", detailedErr)
 		return
 	}
 
@@ -108,9 +108,9 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 			2, //CLEARED
 		)
 		if err != nil {
-			app.errorLog.Println("::ERROR : failed to save transaction to DB due to:\n ", err)
+			app.errorLog.Println("failed to save transaction to DB due to:\n ", err)
 		}
-		app.infoLog.Println(":: INFO: transaction has been created with ID: ", txnID)
+		app.infoLog.Println("transaction has been created with ID: ", txnID)
 
 		// create new order
 		orderID, err := app.SaveOrder(
@@ -122,9 +122,9 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 			amount,
 		)
 		if err != nil {
-			app.errorLog.Println("::ERROR : failed to save order to DB due to:\n ", err)
+			app.errorLog.Println("failed to save order to DB due to:\n ", err)
 		}
-		app.infoLog.Println(":: INFO: order has been created with ID: ", orderID)
+		app.infoLog.Println("order has been created with ID: ", orderID)
 	}
 
 	data := make(map[string]interface{})
