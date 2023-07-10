@@ -89,7 +89,7 @@ autocomplete="off" novalidate="">
 <script> 
     const amountFromBackend = document.getElementById("amount_from_backend")
     const amountToCharge = parseInt(amountFromBackend.value)
-    console.info("Price is ", amountToCharge)
+    console.info("Price is ", amountToCharge ? (amountToCharge / 100) : amountToCharge)
     if (amountToCharge && amountToCharge > 0) {
         document.getElementById("amount").value = amountToCharge / 100
     } else {
