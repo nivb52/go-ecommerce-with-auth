@@ -72,6 +72,8 @@ type Transaction struct {
 	ExpiryYear          int    `json:"expiry_year"`
 	BankReturnCode      string `json:"bank_return_code"`
 	TransactionStatusID int    `json:"transaction_statuses_id"`
+	PaymentIntent       string `json:"paymentIntent,omitempty"`
+	PaymentMethod       string `json:"paymentMethod,omitempty"`
 
 	CreatedAt time.Time `json:"-"`
 	UpdateAt  time.Time `json:"-"`
@@ -131,8 +133,17 @@ func (m *DBModel) InsertTransaction(txn Transaction) (int, error) {
 	defer cancel()
 	quary := `
 		INSERT INTO transactions 
-		(amount, currency, last_four, bank_return_code, transaction_status_id)
-	VALUES (?, ?, ?, ?, ?)
+		(	amount, 
+			currency, 
+			last_four, 
+			bank_return_code, 
+			transaction_status_id
+			expiry_month, 
+			expiry_year, 
+			payment_intent, 
+			payment_method
+		)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	result, err := m.DB.ExecContext(ctx, quary,
@@ -141,6 +152,10 @@ func (m *DBModel) InsertTransaction(txn Transaction) (int, error) {
 		txn.LastFour,
 		txn.BankReturnCode,
 		txn.TransactionStatusID,
+		txn.ExpiryMonth,
+		txn.ExpiryYear,
+		txn.PaymentIntent,
+		txn.PaymentMethod,
 	)
 	if err != nil {
 		errorLog.Println("Transaction execution failed due:\n", err)

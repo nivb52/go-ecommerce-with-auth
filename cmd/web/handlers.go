@@ -106,6 +106,8 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 			int(expiryYear),
 			bankReturnCode,
 			2, //CLEARED
+			paymentIntent,
+			paymentMethod,
 		)
 		if err != nil {
 			app.errorLog.Println("failed to save transaction to DB due to:\n ", err)
@@ -194,13 +196,16 @@ func (app *application) SaveCustomer(firstName string, lastName string, email st
 	return id, nil
 }
 
-func (app *application) SaveTxn(amount int,
+func (app *application) SaveTxn(
+	amount int,
 	currency string,
 	lastFour string,
 	expiryMonth int,
 	expiryYear int,
 	bankReturnCode string,
 	transactionStatusId int,
+	paymentIntent string,
+	paymentMethod string,
 ) (int, error) {
 
 	txn := models.Transaction{
@@ -211,6 +216,8 @@ func (app *application) SaveTxn(amount int,
 		ExpiryYear:          expiryYear,
 		BankReturnCode:      bankReturnCode,
 		TransactionStatusID: transactionStatusId,
+		PaymentIntent:       paymentIntent,
+		PaymentMethod:       paymentMethod,
 	}
 
 	tables := models.NewModels(app.DB.DB)
