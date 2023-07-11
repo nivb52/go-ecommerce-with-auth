@@ -137,7 +137,7 @@ func (m *DBModel) InsertTransaction(txn Transaction) (int, error) {
 			currency, 
 			last_four, 
 			bank_return_code, 
-			transaction_status_id
+			transaction_status_id,
 			expiry_month, 
 			expiry_year, 
 			payment_intent, 
