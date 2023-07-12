@@ -149,9 +149,11 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 	// write this data to session, and then redirect user to new page?
 	app.Session.Put(r.Context(), "receipt", data)
 	http.Redirect(w, r, "/receipt", http.StatusSeeOther)
+	return
 }
 
 func (app *application) Receipt(w http.ResponseWriter, r *http.Request) {
+	app.infoLog.Println("Hit Receipt Handler")
 
 	data := app.Session.Get(r.Context(), "receipt").(map[string]interface{})
 	app.Session.Remove(r.Context(), "receipt")
@@ -229,7 +231,7 @@ func (app *application) SaveTxn(
 		TransactionStatusID: transactionStatusId,
 	}
 
-	app.debugLog.Println("txn : ", txn)
+	app.debugLog.Println("txn : ", txn.TransactionStatusID)
 	tables := models.NewModels(app.DB.DB)
 	id, err := tables.DB.InsertTransaction(txn)
 	if err != nil {
