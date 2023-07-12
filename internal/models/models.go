@@ -129,8 +129,6 @@ func (m *DBModel) GetWidget(id int) (Widget, error) {
 
 // InsertTransaction insert new txn, and return its id
 func (m *DBModel) InsertTransaction(txn Transaction) (int, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
 	quary := `
 		INSERT INTO transactions 
 		(	amount, 
@@ -143,16 +141,15 @@ func (m *DBModel) InsertTransaction(txn Transaction) (int, error) {
 
 			payment_intent, 
 			payment_method,
-			transaction_status_id,
-		)
-	VALUES (
-		?, ?, ?,
-		 ?, ?, ?,
-		  ?, ?, ?
+			transaction_status_id
+		) 
+		VALUES (
+			?, ?, ?,    
+			?, ?, ?,   
+			?, ?, ?
 		)
 	`
-
-	result, err := m.DB.ExecContext(ctx, quary,
+	result, err := m.insertQuery(quary, "txn",
 		txn.Amount,
 		txn.Currency,
 		txn.LastFour,
@@ -165,8 +162,9 @@ func (m *DBModel) InsertTransaction(txn Transaction) (int, error) {
 		txn.PaymentMethod,
 		txn.TransactionStatusID,
 	)
+
 	if err != nil {
-		errorLog.Println("Transaction execution failed due:\n", err)
+		sillyLog.Println("Transaction execution failed due:\n", err)
 		return 0, err
 	}
 
