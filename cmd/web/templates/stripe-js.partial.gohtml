@@ -45,6 +45,7 @@
     }
 
    function val() {
+
         const form = document.getElementById("charge_form");
         const amountAsNumber = parseFloat(document.getElementById("amount").value)  * 100
         if (isNaN(amountAsNumber) || amountAsNumber === 0 ) {
@@ -88,9 +89,12 @@
                 if (result.error) {
                     // card declined, or something went wrong with the card
                     showCardError(result.error.message);
+                    console.error(result.error.message)
                     showPayButtons();
                 } else if(result.paymentIntent) {
+                     console.log('result.paymentInten returned ');
                     if (result.paymentIntent.status === "succeeded") {
+                        
                         // we have charged the card
                         document.getElementById("payment_method").value = result.paymentIntent?.payment_method;
                         document.getElementById("payment_intent").value = result.paymentIntent?.id;
@@ -99,7 +103,9 @@
 
                         processing.classList.add("d-none");
                         showCardSuccess();
-                        form.submit();
+                        console.log(' SUBMITING ... ' );
+                        document.getElementById("charge_form").submit();
+                        return;
                     }
                 }
             }).catch(err => {
