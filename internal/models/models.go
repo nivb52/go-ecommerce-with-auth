@@ -135,27 +135,35 @@ func (m *DBModel) InsertTransaction(txn Transaction) (int, error) {
 		INSERT INTO transactions 
 		(	amount, 
 			currency, 
-			last_four, 
+			last_four,
+
 			bank_return_code, 
-			transaction_status_id,
 			expiry_month, 
 			expiry_year, 
+
 			payment_intent, 
-			payment_method
+			payment_method,
+			transaction_status_id,
 		)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	VALUES (
+		?, ?, ?,
+		 ?, ?, ?,
+		  ?, ?, ?
+		)
 	`
 
 	result, err := m.DB.ExecContext(ctx, quary,
 		txn.Amount,
 		txn.Currency,
 		txn.LastFour,
+
 		txn.BankReturnCode,
-		txn.TransactionStatusID,
 		txn.ExpiryMonth,
 		txn.ExpiryYear,
+
 		txn.PaymentIntent,
 		txn.PaymentMethod,
+		txn.TransactionStatusID,
 	)
 	if err != nil {
 		errorLog.Println("Transaction execution failed due:\n", err)
