@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/gob"
 	"flag"
 	"fmt"
 	"go-ecommerce-with-auth/internal/driver"
@@ -76,7 +77,6 @@ func main() {
 			log.Println(":: PRE RUNNING: loading local.env file failed:\n", errEnv)
 		}
 	}
-
 	var cfg config
 	// run args
 	flag.IntVar(&cfg.port, "port", 4000, "Server port to listen on")
@@ -92,6 +92,8 @@ func main() {
 		log.Fatal("missing Stripe Secret or Public Key, exiting ... ")
 		os.Exit(2)
 	}
+
+	gob.Register(map[string]any{})
 
 	// logs
 	infoLog := log.New(os.Stdout, "::INFO :\t", log.Ldate|log.Ltime)

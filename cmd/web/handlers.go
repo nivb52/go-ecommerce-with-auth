@@ -105,12 +105,13 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 			int(expiryMonth),
 			int(expiryYear),
 			bankReturnCode,
-			2, //CLEARED
 			paymentIntent,
 			paymentMethod,
+			2, //CLEARED
 		)
 		if err != nil {
 			app.errorLog.Println("failed to save transaction to DB due to:\n ", err)
+			return
 		}
 		app.infoLog.Println("transaction has been created with ID: ", txnID)
 
@@ -145,7 +146,15 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 	data["expiry_year"] = expiryYear
 	data["bank_return_code"] = bankReturnCode
 
-	// should write this data to session, and then redirect user to new page?
+	// write this data to session, and then redirect user to new page?
+	app.Session.Put(r.Context(), "receipt", data)
+	http.Redirect(w, r, "/receipt", http.StatusSeeOther)
+}
+
+func (app *application) Receipt(w http.ResponseWriter, r *http.Request) {
+
+	data := app.Session.Get(r.Context(), "receipt").(map[string]interface{})
+	app.Session.Remove(r.Context(), "receipt")
 
 	if err := app.renderTemplate(w, r, "succeeded", &templateData{
 		Data: data,
@@ -171,7 +180,7 @@ func (app *application) WidgetById(w http.ResponseWriter, r *http.Request) {
 	data := make(map[string]interface{})
 	data["widget"] = widget
 	app.debugLog.Println("widget.Price ", widget.Price)
-	err := app.renderTemplate(w, r, "buy-once", &templateData{
+	err := app.renderTemplate(w, r, "single-widget", &templateData{
 		Data: data,
 	}, "stripe-js")
 	if err != nil {
@@ -203,9 +212,9 @@ func (app *application) SaveTxn(
 	expiryMonth int,
 	expiryYear int,
 	bankReturnCode string,
-	transactionStatusId int,
 	paymentIntent string,
 	paymentMethod string,
+	transactionStatusId int,
 ) (int, error) {
 
 	txn := models.Transaction{
@@ -215,11 +224,12 @@ func (app *application) SaveTxn(
 		ExpiryMonth:         expiryMonth,
 		ExpiryYear:          expiryYear,
 		BankReturnCode:      bankReturnCode,
-		TransactionStatusID: transactionStatusId,
 		PaymentIntent:       paymentIntent,
 		PaymentMethod:       paymentMethod,
+		TransactionStatusID: transactionStatusId,
 	}
 
+	app.debugLog.Println("txn : ", txn)
 	tables := models.NewModels(app.DB.DB)
 	id, err := tables.DB.InsertTransaction(txn)
 	if err != nil {
