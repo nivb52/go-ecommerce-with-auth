@@ -44,7 +44,7 @@ func (app *application) GetPaymentIntent(w http.ResponseWriter, r *http.Request)
 		app.errorLog.Println(err)
 		return
 	} else if amount <= 0 {
-		app.infoLog.Println(":: INFO: payment is negative or zero")
+		app.infoLog.Println("payment is negative or zero")
 		w.Header().Set("Content-Type", "application/json")
 		// w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.WriteHeader(http.StatusBadRequest)
@@ -56,7 +56,7 @@ func (app *application) GetPaymentIntent(w http.ResponseWriter, r *http.Request)
 
 		out, err := json.MarshalIndent(j, "", "  ")
 		if err != nil {
-			app.errorLog.Println(":: ERROR parse json failed: ", err)
+			app.errorLog.Println("parse json failed: ", err)
 		}
 		w.Write(out)
 	}
@@ -86,8 +86,9 @@ func (app *application) GetPaymentIntent(w http.ResponseWriter, r *http.Request)
 		// w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(data)
+
 	} else {
-		app.infoLog.Println("::INFO Payment failed")
+		app.infoLog.Println("Payment failed")
 		j := jsonResponse{
 			OK:      true,
 			Message: msg,
@@ -96,11 +97,10 @@ func (app *application) GetPaymentIntent(w http.ResponseWriter, r *http.Request)
 
 		out, err := json.MarshalIndent(j, "", "  ")
 		if err != nil {
-			app.errorLog.Println(":: ERROR parse json failed: ", err)
+			app.errorLog.Println("parse json failed: ", err)
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Write(out)
 	}
 }
