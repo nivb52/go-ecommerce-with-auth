@@ -19,8 +19,8 @@ func (app *application) routes() http.Handler {
 	}))
 	mux.Use(SessionLoad)
 
-	mux.Get("/liveness", app.Liveness)
 	mux.Get("/", app.Home)
+	mux.Get("/liveness", app.Liveness)
 	mux.Get("/virtual-terminal", app.VirtualTerminal)
 	mux.Post("/payment-succeeded", app.PaymentSucceeded)
 	mux.Post("/receipt", app.Receipt)
