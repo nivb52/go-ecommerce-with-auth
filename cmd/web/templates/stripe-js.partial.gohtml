@@ -47,6 +47,7 @@
    function val() {
 
         const form = document.getElementById("charge_form");
+
         const amountAsNumber = parseFloat(document.getElementById("amount").value)  * 100
         if (isNaN(amountAsNumber) || amountAsNumber === 0 ) {
             this.event.preventDefault();
@@ -100,12 +101,14 @@
                         document.getElementById("payment_intent").value = result.paymentIntent?.id;
                         document.getElementById("payment_amount").value = result.paymentIntent?.amount;
                         document.getElementById("payment_currency").value = result.paymentIntent?.currency;
-
+                        
                         processing.classList.add("d-none");
                         showCardSuccess();
                         console.log(' SUBMITING ... ' );
-                        document.getElementById("charge_form").submit();
-                        return;
+                        
+                        result = undefined;
+                        form.submit();
+                        return false;
                     }
                 }
             }).catch(err => {
