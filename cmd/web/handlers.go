@@ -231,7 +231,6 @@ func (app *application) SaveTxn(
 		TransactionStatusID: transactionStatusId,
 	}
 
-	app.debugLog.Println("txn : ", txn.TransactionStatusID)
 	tables := models.NewModels(app.DB.DB)
 	id, err := tables.DB.InsertTransaction(txn)
 	if err != nil {
