@@ -26,7 +26,7 @@
 
 <div class="alert alert-danger text-center d-none" id="card-messages"></div>
 
-<form action="/payment-succeeded" method="post"
+<form action="/payment-succeeded" method="POST"
 name="charge_form" id="charge_form"
 class="d-block needs-validation charge-form"
 autocomplete="off" novalidate="">
@@ -67,8 +67,8 @@ autocomplete="off" novalidate="">
 
     <a id="pay-button" 
     href="javascript:void(0)" 
-    class="btn btn-primary" 
-    type="button"
+    class="btn btn-primary"
+    type="button" 
     onclick="val()">
     Charge Card
     </a>
@@ -87,10 +87,12 @@ autocomplete="off" novalidate="">
     <input type="hidden" name="payment_method" id="payment_method">
     <input type="hidden" name="payment_amount" id="payment_amount">
     <input type="hidden" name="payment_currency" id="payment_currency">
+    <input type="hidden" name="request_id" id="request_id" >
 
 </form>
 {{ end }}
-
+{{ template "stripe-js" .}}
+{{ template "common-js" .}}
 
 {{define "js"}}
 <script> 
@@ -102,6 +104,7 @@ autocomplete="off" novalidate="">
     } else {
         document.getElementById("amount").value = 0
     }
+    const requestUUIDeL = document.getElementById("request_id")
+    requestUUIDeL.value = generateUUID()
 </script>
-{{ template "stripe-js" .}}
 {{end}}

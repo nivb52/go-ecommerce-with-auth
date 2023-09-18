@@ -55,8 +55,18 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 	paymentAmount := r.Form.Get("payment_amount")
 	paymentCurrency := r.Form.Get("payment_currency")
 	widgetId, detailedErr := convertAtoi(r.Form.Get("product_id"))
+	requestId := r.Form.Get("request_id")
+
 	if detailedErr != nil {
 		app.errorLog.Println("failed to convert string to int:\n ", detailedErr)
+		return
+	}
+
+	// check if there is a re-submit of the form with the same requestId
+	tables := models.NewModels(app.DB.DB)
+	id, err := tables.DB.GetOrderByRequestId(requestId)
+	if err != nil && id != 0 {
+		app.infoLog.Println(" ::The form re-submited - abourting....")
 		return
 	}
 
@@ -123,6 +133,7 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 			1, // CLEARED
 			1, // WE allow only 1 quantity at this time
 			amount,
+			requestId,
 		)
 		if err != nil {
 			app.errorLog.Println("failed to save order to DB due to:\n ", err)
@@ -148,7 +159,7 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 
 	// write this data to session, and then redirect user to new page?
 	app.Session.Put(r.Context(), "receipt", data)
-	http.Redirect(w, r, "/receipt", http.StatusSeeOther)
+	http.Redirect(w, r, "/receipt", http.StatusOK)
 	return
 }
 
@@ -246,6 +257,7 @@ func (app *application) SaveOrder(widgetId int,
 	statusId int,
 	quantity int,
 	amount int,
+	requestId string,
 ) (int, error) {
 
 	ordr := models.Order{
@@ -255,6 +267,7 @@ func (app *application) SaveOrder(widgetId int,
 		StatusID:      statusId,
 		Quantity:      quantity,
 		Amount:        amount,
+		RequestID:     requestId,
 	}
 
 	tables := models.NewModels(app.DB.DB)

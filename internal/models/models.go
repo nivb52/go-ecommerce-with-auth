@@ -43,6 +43,7 @@ type Order struct {
 	StatusID      int       `json:"status_id"`
 	Quantity      int       `json:"quantity"`
 	Amount        int       `json:"amount"`
+	RequestID     string    `json:"-"`
 	CreatedAt     time.Time `json:"-"`
 	UpdateAt      time.Time `json:"-"`
 }
@@ -238,7 +239,7 @@ func (m *DBModel) InsertCustomer(c Customer) (int, error) {
 	return int(id), nil
 }
 
-// insertQuary
+// InsertQuary retrive sql result, error from query and data
 func (m *DBModel) insertQuery(query, logAnnouncment string, data ...any) (sql.Result, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -250,4 +251,26 @@ func (m *DBModel) insertQuery(query, logAnnouncment string, data ...any) (sql.Re
 	}
 
 	return result, nil
+}
+
+// GetOrderByRequestId insert new order, and return its id
+func (m *DBModel) GetOrderByRequestId(requestId string) (int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var ordr Order
+	query := `SELECT 
+		id 
+		FROM orders 
+		WHERE requestId = ?`
+	row := m.DB.QueryRowContext(ctx, query, requestId)
+	err := row.Scan(
+		&ordr.ID,
+	)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return ordr.ID, nil
 }
