@@ -71,7 +71,7 @@ func main() {
 	flag.Parse()
 
 	// secrets check
-	if len(cfg.stripe.secret) < 10 || len(cfg.stripe.key) < 10 {
+	if len(cfg.stripe.key) < 10 {
 		log.Fatal("missing Stripe Secret Key")
 	}
 
@@ -89,7 +89,7 @@ func main() {
 
 	conn, connErr := driver.OpenDB(cfg.db.dsn)
 	if connErr != nil {
-		log.Fatal(":: DB connecition Failed! Exiting")
+		log.Fatal(":: DB connection Failed! Exiting")
 	}
 	defer conn.Close()
 	tc := make(map[string]*template.Template)
