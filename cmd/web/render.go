@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-	"strings"
 )
 
 type templateData struct {
@@ -82,7 +81,8 @@ func (app *application) renderTemplate(
 }
 
 func (app *application) parseTemplate(
-	partials []string, page, templateToRender string) (
+	partials []string, page, templateToRender string,
+) (
 	*template.Template, error) {
 
 	var t *template.Template
@@ -90,19 +90,16 @@ func (app *application) parseTemplate(
 
 	// build partials
 	if len(partials) > 0 {
+		args := make([]string, len(partials)+2)
 		for i, x := range partials {
-			partials[i] = fmt.Sprintf("templates/%s.partial.gohtml", x)
+			args[i] = fmt.Sprintf("templates/%s.partial.gohtml", x)
 		}
-	}
+		args[len(partials)] = "templates/base.layout.gohtml"
+		args[len(partials)+1] = templateToRender
 
-	if len(partials) > 0 {
 		t, err = template.New(fmt.Sprintf("%s.page.gohtml", page)).
 			Funcs(functions).
-			ParseFS(templateFS,
-				"templates/base.layout.gohtml",
-				strings.Join(partials, ","),
-				templateToRender,
-			)
+			ParseFS(templateFS, args...)
 	} else {
 		t, err = template.New(fmt.Sprintf("%s.page.gohtml", page)).
 			Funcs(functions).
