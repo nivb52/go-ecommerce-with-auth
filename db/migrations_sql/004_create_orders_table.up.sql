@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS orders (
     status_id INTEGER NOT NULL,
     FOREIGN  KEY (status_id) REFERENCES statuses(id),
 
+    customer_id INTEGER NOT NULL,
     quantity INTEGER,
     amount INTEGER,
 
