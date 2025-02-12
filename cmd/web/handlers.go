@@ -35,14 +35,27 @@ func (app *application) VirtualTerminal(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-// PaymentSucceeded displays the receipt page
-func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request) {
-	app.infoLog.Println("Hit PaymentSucceeded Handler")
+type TransactionData struct {
+	FirstName       string
+	LastName        string
+	CardHolder      string
+	Email           string
+	PaymentIntentID string
+	PaymentMethodID string
+	Amount          int
+	PaymentCurrency string
+	LastFour        string
+	ExpiryMonth     int
+	ExpiryYear      int
+	BankReturnCode  string
+}
 
+func (app *application) GetTransactionData(r *http.Request) (TransactionData, error) {
+	var txData TransactionData
 	err := r.ParseForm()
 	if err != nil {
 		app.errorLog.Println(err)
-		return
+		return txData, err
 	}
 
 	// read posted data
@@ -54,6 +67,69 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 	paymentMethod := r.Form.Get("payment_method")
 	paymentAmount := r.Form.Get("payment_amount")
 	paymentCurrency := r.Form.Get("payment_currency")
+	amount, detailedErr := convertAtoi(paymentAmount)
+	if detailedErr != nil {
+		app.errorLog.Println("failed to convert string to int:\n ", detailedErr)
+		return txData, err
+	}
+
+	card := cards.Card{
+		Secret: app.config.stripe.secret,
+		Key:    app.config.stripe.key,
+	}
+	pi, err := card.RetrivePaymentIntent(paymentIntent)
+	if err != nil {
+		app.infoLog.Println(" ::ERROR failed to retrive payment intent")
+		app.errorLog.Println(err)
+		return txData, err
+	}
+
+	pm, err := card.GetPaymentMethod(paymentMethod)
+	if err != nil {
+		app.errorLog.Println("failed to get payment method, due to: \n", err)
+		return txData, err
+	}
+
+	lastFour := pm.Card.Last4
+	expiryMonth := pm.Card.ExpMonth
+	expiryYear := pm.Card.ExpYear
+	bankReturnCode := pi.Charges.Data[0].ID
+
+	txData = TransactionData{
+		FirstName:       customerFirstName,
+		LastName:        customerLastName,
+		CardHolder:      cardHolder,
+		Email:           email,
+		PaymentIntentID: paymentIntent,
+		PaymentMethodID: paymentMethod,
+		Amount:          amount,
+		PaymentCurrency: paymentCurrency,
+		LastFour:        lastFour,
+		ExpiryMonth:     int(expiryMonth), // convert uint64 to int
+		ExpiryYear:      int(expiryYear),  // convert uint64 to int
+		BankReturnCode:  bankReturnCode,
+	}
+
+	return txData, nil
+}
+
+// PaymentSucceeded displays the receipt page
+func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request) {
+	app.infoLog.Println("Hit PaymentSucceeded Handler")
+
+	err := r.ParseForm()
+	if err != nil {
+		app.errorLog.Println(err)
+		return
+	}
+
+	// get transaction data
+	txData, err := app.GetTransactionData(r)
+	if err != nil {
+		app.errorLog.Println(err)
+		return
+	}
+	// read posted data
 	widgetId, detailedErr := convertAtoi(r.Form.Get("product_id"))
 	requestId := r.Form.Get("request_id")
 
@@ -70,55 +146,29 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	card := cards.Card{
-		Secret: app.config.stripe.secret,
-		Key:    app.config.stripe.key,
-	}
-	pi, err := card.RetrivePaymentIntent(paymentIntent)
-	if err != nil {
-		app.infoLog.Println(" ::ERROR failed to retrive payment intent")
-		app.errorLog.Println(err)
-		return
-	}
-
-	pm, err := card.GetPaymentMethod(paymentMethod)
-	if err != nil {
-		app.errorLog.Println("failed to get payment method, due to: \n", err)
-		return
-	}
-
-	lastFour := pm.Card.Last4
-	expiryMonth := pm.Card.ExpMonth
-	expiryYear := pm.Card.ExpYear
-	bankReturnCode := pi.Charges.Data[0].ID
-
 	// create new customer
-	customerID, customerSqlErr := app.SaveCustomer(customerFirstName, customerLastName, email)
+	customerID, customerSqlErr := app.SaveCustomer(txData.FirstName, txData.LastName, txData.Email)
 	if err != nil {
 		app.errorLog.Println("failed to save customer to DB due to:\n ", customerSqlErr)
 
 	}
 	app.infoLog.Println("customer has been created with ID: ", customerID)
 
-	amount, detailedErr := convertAtoi(paymentAmount)
-	if detailedErr != nil {
-		app.errorLog.Println("failed to convert string to int:\n ", detailedErr)
-		return
-	}
-
 	// create new transaction
 	if customerSqlErr == nil {
-		txnID, err := app.SaveTxn(
-			amount,
-			paymentCurrency,
-			lastFour,
-			int(expiryMonth),
-			int(expiryYear),
-			bankReturnCode,
-			paymentIntent,
-			paymentMethod,
-			2, //CLEARED
-		)
+		txn := models.Transaction{
+			Amount:              txData.Amount,
+			Currency:            txData.PaymentCurrency,
+			LastFour:            txData.LastFour,
+			ExpiryMonth:         txData.ExpiryMonth,
+			ExpiryYear:          txData.ExpiryYear,
+			BankReturnCode:      txData.BankReturnCode,
+			PaymentIntent:       txData.PaymentIntentID,
+			PaymentMethod:       txData.PaymentMethodID,
+			TransactionStatusID: 2, //CLEARED,
+		}
+
+		txnID, err := app.SaveTxn(txn)
 		if err != nil {
 			app.errorLog.Println("failed to save transaction to DB due to:\n ", err)
 			return
@@ -132,7 +182,7 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 			customerID,
 			1, // CLEARED
 			1, // WE allow only 1 quantity at this time
-			amount,
+			txData.Amount,
 			requestId,
 		)
 		if err != nil {
@@ -141,24 +191,24 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 		app.infoLog.Println("order has been created with ID: ", orderID)
 	}
 
-	data := make(map[string]interface{})
-	data["email"] = email
-	data["first_name"] = customerFirstName
-	data["last_name"] = customerLastName
-
-	data["cardholder"] = cardHolder
-	data["pi"] = paymentIntent
-	data["pm"] = paymentMethod
-	data["pa"] = amount
-	data["pc"] = paymentCurrency
-
-	data["last_four"] = lastFour
-	data["expiry_month"] = expiryMonth
-	data["expiry_year"] = expiryYear
-	data["bank_return_code"] = bankReturnCode
+	//data := make(map[string]interface{})
+	//data["email"] = txData.Email
+	//data["first_name"] = txData.FirstName
+	//data["last_name"] = txData.LastName
+	//
+	//data["cardholder"] = txData.CardHolder
+	//data["pi"] = txData.PaymentIntentID
+	//data["pm"] = txData.PaymentMethodID
+	//data["pa"] = txData.Amount
+	//data["pc"] = txData.PaymentCurrency
+	//
+	//data["last_four"] = txData.LastFour
+	//data["expiry_month"] = txData.ExpiryMonth
+	//data["expiry_year"] = txData.ExpiryYear
+	//data["bank_return_code"] = txData.BankReturnCode
 
 	// write this data to session, and then redirect user to new page?
-	app.Session.Put(r.Context(), "receipt", data)
+	app.Session.Put(r.Context(), "receipt", txData)
 	http.Redirect(w, r, "/receipt", http.StatusOK)
 	return
 }
@@ -166,8 +216,11 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 func (app *application) Receipt(w http.ResponseWriter, r *http.Request) {
 	app.infoLog.Println("Hit Receipt Handler")
 
-	data := app.Session.Get(r.Context(), "receipt").(map[string]interface{})
+	txn := app.Session.Get(r.Context(), "receipt").(TransactionData)
 	app.Session.Remove(r.Context(), "receipt")
+
+	data := make(map[string]interface{})
+	data["txn"] = txn
 
 	if err := app.renderTemplate(w, r, "succeeded", &templateData{
 		Data: data,
@@ -195,7 +248,7 @@ func (app *application) WidgetById(w http.ResponseWriter, r *http.Request) {
 	app.debugLog.Println("widget.Price ", widget.Price)
 	err := app.renderTemplate(w, r, "single-widget", &templateData{
 		Data: data,
-	}, "stripe-js")
+	}, "stripe-js", "common-js")
 	if err != nil {
 		app.errorLog.Println(err)
 	}
@@ -218,29 +271,7 @@ func (app *application) SaveCustomer(firstName string, lastName string, email st
 	return id, nil
 }
 
-func (app *application) SaveTxn(
-	amount int,
-	currency string,
-	lastFour string,
-	expiryMonth int,
-	expiryYear int,
-	bankReturnCode string,
-	paymentIntent string,
-	paymentMethod string,
-	transactionStatusId int,
-) (int, error) {
-
-	txn := models.Transaction{
-		Amount:              amount,
-		Currency:            currency,
-		LastFour:            lastFour,
-		ExpiryMonth:         expiryMonth,
-		ExpiryYear:          expiryYear,
-		BankReturnCode:      bankReturnCode,
-		PaymentIntent:       paymentIntent,
-		PaymentMethod:       paymentMethod,
-		TransactionStatusID: transactionStatusId,
-	}
+func (app *application) SaveTxn(txn models.Transaction) (int, error) {
 
 	tables := models.NewModels(app.DB.DB)
 	id, err := tables.DB.InsertTransaction(txn)
