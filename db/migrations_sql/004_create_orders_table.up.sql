@@ -32,8 +32,13 @@ CREATE TABLE IF NOT EXISTS orders (
     customer_id INTEGER NOT NULL,
     quantity INTEGER,
     amount INTEGER,
+    request_id VARCHAR(255),
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+ALTER TABLE orders ADD INDEX request_id_index (request_id);
+ALTER TABLE orders ADD INDEX customer_id_index (customer_id);
+ALTER TABLE orders ADD INDEX status_id_index (status_id);
 
