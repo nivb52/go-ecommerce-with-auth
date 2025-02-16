@@ -16,7 +16,7 @@
     place-items: start;
     align-items: center;
     ">
-    <img class="flex center" src="static/widget.png" />
+    <img class="flex center" src="/static/widget.png" />
     <div class= "mb-3">
         <h3 >{{ $widget.Name}} </h3>
         <h3 >Amount
@@ -91,11 +91,9 @@ autocomplete="off" novalidate="">
 
 </form>
 {{ end }}
-{{ template "stripe-js" .}}
-{{ template "common-js" .}}
 
 {{define "js"}}
-<script> 
+<script>
     const amountFromBackend = document.getElementById("amount_from_backend")
     const amountToCharge = parseInt(amountFromBackend.value)
     console.info("Price is ", amountToCharge ? (amountToCharge / 100) : amountToCharge)
@@ -104,7 +102,17 @@ autocomplete="off" novalidate="">
     } else {
         document.getElementById("amount").value = 0
     }
-    const requestUUIDeL = document.getElementById("request_id")
-    requestUUIDeL.value = generateUUID()
-</script>
+    const requestUUIDeL = document.getElementById("request_id");
+    if (requestUUIDeL) {
+        setTimeout(() => {
+            console.log("Request ID value set");
+            requestUUIDeL.value = generateUUID();
+        }, 2000);
+    } else {
+        console.error("Request ID element not found");
+    }
+    </script>
+    {{block "common-js" .}} {{end}}
+    {{block "stripe-js" .}} {{end}}
 {{end}}
+
