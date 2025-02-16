@@ -105,11 +105,11 @@
                         
                         processing.classList.add("d-none");
                         showCardSuccess();
-                        console.log(' SUBMITING ... ' );
+                        console.log(' SUBMITTING ... ' );
                         
                         result = undefined;
                         form.submit();
-                        {{/* return true; */}}
+                        return true;
                     }
                 }
             }).catch(err => {
