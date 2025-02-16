@@ -18,12 +18,11 @@ func (app *application) routes() http.Handler {
 		MaxAge:           300,
 	}))
 	mux.Use(SessionLoad)
-
 	mux.Get("/", app.Home)
 	mux.Get("/liveness", app.Liveness)
 	mux.Get("/virtual-terminal", app.VirtualTerminal)
 	mux.Post("/payment-succeeded", app.PaymentSucceeded)
-	mux.Post("/receipt", app.Receipt)
+	mux.Get("/receipt", app.Receipt)
 
 	mux.Get("/widgets/{id}", app.WidgetById)
 
