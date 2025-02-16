@@ -3,7 +3,8 @@ package models
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"log"
+	"os"
 	"time"
 )
 
@@ -42,6 +43,7 @@ type Order struct {
 	StatusID      int       `json:"status_id"`
 	Quantity      int       `json:"quantity"`
 	Amount        int       `json:"amount"`
+	RequestID     string    `json:"-"`
 	CreatedAt     time.Time `json:"-"`
 	UpdateAt      time.Time `json:"-"`
 }
@@ -71,6 +73,8 @@ type Transaction struct {
 	ExpiryYear          int    `json:"expiry_year"`
 	BankReturnCode      string `json:"bank_return_code"`
 	TransactionStatusID int    `json:"transaction_statuses_id"`
+	PaymentIntent       string `json:"paymentIntent,omitempty"`
+	PaymentMethod       string `json:"paymentMethod,omitempty"`
 
 	CreatedAt time.Time `json:"-"`
 	UpdateAt  time.Time `json:"-"`
@@ -92,11 +96,13 @@ type Customer struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
-	Password  string `json:"-"`
 
 	CreatedAt time.Time `json:"-"`
 	UpdateAt  time.Time `json:"-"`
 }
+
+var errorLog = log.New(os.Stdout, ":: ERROR SQL:\t", log.Ltime)
+var sillyLog = log.New(os.Stdout, ":: Silly:\t", log.Ltime)
 
 func (m *DBModel) GetWidget(id int) (Widget, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
@@ -124,76 +130,144 @@ func (m *DBModel) GetWidget(id int) (Widget, error) {
 
 // InsertTransaction insert new txn, and return its id
 func (m *DBModel) InsertTransaction(txn Transaction) (int, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
 	quary := `
 		INSERT INTO transactions 
-		(amount, currency, last_four, bank_return_code, transaction_statuses_id)
-	VALUES (?, ?, ?, ?, ?)
-	`
+		(	amount, 
+			currency, 
+			last_four,
 
-	result, err := m.DB.ExecContext(ctx, quary,
+			bank_return_code, 
+			expiry_month, 
+			expiry_year, 
+
+			payment_intent, 
+			payment_method,
+			transaction_status_id
+		) 
+		VALUES (
+			?, ?, ?,    
+			?, ?, ?,   
+			?, ?, ?
+		)
+	`
+	result, err := m.insertQuery(quary, "txn",
 		txn.Amount,
 		txn.Currency,
 		txn.LastFour,
+
 		txn.BankReturnCode,
+		txn.ExpiryMonth,
+		txn.ExpiryYear,
+
+		txn.PaymentIntent,
+		txn.PaymentMethod,
 		txn.TransactionStatusID,
 	)
+
 	if err != nil {
-		fmt.Println(":: ERROR SQL:  Transaction execution failed due:\n", err)
+		sillyLog.Println("Transaction execution failed due:\n", err)
 		return 0, err
 	}
 
 	id, err := result.LastInsertId()
 	if err != nil {
-		fmt.Println(":: ERROR SQL: Transaction executed but failed to retrive last inserted id, err: \n", err)
+		errorLog.Println("Transaction executed but failed to retrive last inserted id, err: \n", err)
 		return 0, err
 	}
 
 	return int(id), nil
 }
 
-// InsertOrder insert new txn, and return its id
+// InsertOrder insert new order, and return its id
 func (m *DBModel) InsertOrder(ordr Order) (int, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
 	quary := `
 		INSERT INTO orders 
-		(widget_id, transaction_id, status_id, quantity, amount)
-	VALUES (?, ?, ?, ?, ?)
+		(widget_id, transaction_id, customer_id, 
+			status_id, quantity, amount
+		)
+		VALUES (?, ?, ?, 
+				?, ?, ?
+			)
 	`
-
-	result, err := m.DB.ExecContext(ctx, quary,
+	result, err := m.insertQuery(quary, "order",
 		ordr.WidgetID,
 		ordr.TransactionID,
+		ordr.CustomerID,
 		ordr.StatusID,
 		ordr.Quantity,
 		ordr.Amount,
 	)
+
 	if err != nil {
-		fmt.Println(":: ERROR SQL:  Order execution failed due:\n", err)
+		sillyLog.Println("Order execution failed due")
 		return 0, err
 	}
 
 	id, err := result.LastInsertId()
 	if err != nil {
-		fmt.Println(":: ERROR SQL: Order executed but failed to retrive last inserted id, err: \n", err)
+		errorLog.Println("Order executed but failed to retrive last inserted id, err: \n", err)
 		return 0, err
 	}
 
 	return int(id), nil
 }
 
-// insertQuary
-func (m *DBModel) insertQuery(q, data, name string) (sql.Result, error) {
+// InsertCustomer insert new customer, and return its id
+func (m *DBModel) InsertCustomer(c Customer) (int, error) {
+	quary := `
+		INSERT INTO customers 
+		(first_name, last_name, email)
+	VALUES (?, ?, ?)
+	`
+	result, err := m.insertQuery(quary, "customer",
+		c.FirstName,
+		c.LastName,
+		c.Email,
+	)
+
+	if err != nil {
+		sillyLog.Println("Customer execution failed")
+		return 0, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		errorLog.Println("Customer executed but failed to retrive last inserted id, err: \n", err)
+		return 0, err
+	}
+
+	return int(id), nil
+}
+
+// InsertQuary retrive sql result, error from query and data
+func (m *DBModel) insertQuery(query, logAnnouncment string, data ...any) (sql.Result, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	result, err := m.DB.ExecContext(ctx, q, data)
+	result, err := m.DB.ExecContext(ctx, query, data...)
 	if err != nil {
-		fmt.Println(":: ERROR SQL:  ", name, " execution failed due:\n", err)
+		errorLog.Println(logAnnouncment, " execution failed due:\n", err)
 		return result, err
 	}
 
 	return result, nil
+}
+
+// GetOrderByRequestId insert new order, and return its id
+func (m *DBModel) GetOrderByRequestId(requestId string) (int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var ordr Order
+	query := `SELECT id FROM orders WHERE request_id = ?`
+	row := m.DB.QueryRowContext(ctx, query, requestId)
+	err := row.Scan(
+		&ordr.ID,
+	)
+
+	if err != nil {
+		return -1, err
+	}
+
+	return ordr.ID, nil
 }

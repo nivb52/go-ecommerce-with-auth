@@ -1,0 +1,21 @@
+{{template "base" . }}
+
+    {{define "title"}}
+        Payment Succeeded!
+    {{end}}
+
+    {{define "content"}}
+        {{ $txn := index .Data "txn"}}
+        <h2 class="mt-5">Payment Succeeded</h2>
+        <hr>
+        <p>Payment Intent: {{$txn.PaymentIntentID}}</p>
+        <p>Cardholder: {{$txn.CardHolder}}</p>
+        <p>Email: {{$txn.Email}}</p>
+        <p>Payment Method: {{$txn.PaymentMethodID}}</p>
+        <p>Payment Amount: {{formatCurrency $txn.Amount}}</p>
+        <p>Currency: {{$txn.PaymentCurrency}}</p>
+
+        <p>Last 4 Digit: {{$txn.LastFour}}</p>
+        <p>Bank return code: {{$txn.BankReturnCode}}</p>
+        <p>Expiry: {{$txn.ExpiryMonth}}/{{$txn.ExpiryYear}}</p>
+    {{end}}

@@ -1,3 +1,3 @@
 
-ALTER TABLE transaction DROP COLUMN expiry_month;
-ALTER TABLE transaction DROP COLUMN expiry_year;
+ALTER TABLE transactions DROP COLUMN expiry_month;
+ALTER TABLE transactions DROP COLUMN expiry_year;

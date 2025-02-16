@@ -53,7 +53,12 @@ func (app *application) serve() error {
 func main() {
 	envErr := godotenv.Load(".env")
 	if envErr != nil {
-		log.Fatal(":: ENV FILE IS MISSING OR WRONG! Exiting")
+		log.Println(":: INFO loading .env file failed:\n", envErr)
+		envErr := godotenv.Load("./cmd/web/local.env")
+		if envErr != nil {
+			log.Println(":: INFO loading local.env file failed:\n", envErr)
+		}
+		//  log.Fatal(":: ENV FILE IS MISSING OR WRONG! Exiting")
 	}
 
 	var cfg config
@@ -77,7 +82,7 @@ func main() {
 	conn, connErr := driver.OpenDB(cfg.db.dsn)
 	if connErr != nil {
 		fmt.Printf("ENV: DSN_API: %s \n", os.Getenv("DSN_API"))
-		log.Fatal(":: DB connecition Failed! Exiting")
+		log.Fatal(":: DB connection Failed! Exiting")
 	}
 	defer conn.Close()
 

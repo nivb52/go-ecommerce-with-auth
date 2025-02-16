@@ -45,7 +45,9 @@
     }
 
    function val() {
+
         const form = document.getElementById("charge_form");
+
         const amountAsNumber = parseFloat(document.getElementById("amount").value)  * 100
         if (isNaN(amountAsNumber) || amountAsNumber === 0 ) {
             this.event.preventDefault();
@@ -88,29 +90,38 @@
                 if (result.error) {
                     // card declined, or something went wrong with the card
                     showCardError(result.error.message);
+                    console.error(result.error.message)
                     showPayButtons();
+                    return false;
                 } else if(result.paymentIntent) {
+                     console.log('result.paymentInten returned ');
                     if (result.paymentIntent.status === "succeeded") {
+                        
                         // we have charged the card
                         document.getElementById("payment_method").value = result.paymentIntent?.payment_method;
                         document.getElementById("payment_intent").value = result.paymentIntent?.id;
                         document.getElementById("payment_amount").value = result.paymentIntent?.amount;
                         document.getElementById("payment_currency").value = result.paymentIntent?.currency;
-
+                        
                         processing.classList.add("d-none");
                         showCardSuccess();
-                        document.getElementById("charge_form").submit();
+                        console.log(' SUBMITTING ... ' );
+                        
+                        result = undefined;
+                        form.submit();
+                        return true;
                     }
                 }
             }).catch(err => {
                 console.error(err);
                 // due it may not be cardError but server error or JS code error
-                throw(err)
+                throw(err);
             });
         }).catch(err  => {
             console.error(err);
             showCardError("Invalid response from payment gateway!");
             showPayButtons();
+            return false;
         });
     }
 

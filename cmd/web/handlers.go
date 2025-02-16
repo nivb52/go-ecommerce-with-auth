@@ -1,13 +1,14 @@
 package main
 
 import (
+	"encoding/gob"
 	"encoding/json"
+	"github.com/go-chi/chi/v5"
 	"go-ecommerce-with-auth/internal/cards"
+	"go-ecommerce-with-auth/internal/models"
 	"net/http"
 	"os"
 	"strconv"
-
-	"github.com/go-chi/chi/v5"
 )
 
 func (app *application) Liveness(w http.ResponseWriter, r *http.Request) {
@@ -34,23 +35,43 @@ func (app *application) VirtualTerminal(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-// PaymentSucceeded displays the receipt page
-func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request) {
-	app.infoLog.Println("Hit PaymentSucceeded Handler")
+type TransactionData struct {
+	FirstName       string
+	LastName        string
+	CardHolder      string
+	Email           string
+	PaymentIntentID string
+	PaymentMethodID string
+	Amount          int
+	PaymentCurrency string
+	LastFour        string
+	ExpiryMonth     int
+	ExpiryYear      int
+	BankReturnCode  string
+}
 
+func (app *application) GetTransactionData(r *http.Request) (TransactionData, error) {
+	var txData TransactionData
 	err := r.ParseForm()
 	if err != nil {
 		app.errorLog.Println(err)
-		return
+		return txData, err
 	}
-
+	gob.Register(TransactionData{})
 	// read posted data
+	customerFirstName := r.Form.Get("first_name")
+	customerLastName := r.Form.Get("last_name")
 	cardHolder := r.Form.Get("cardholder_name")
 	email := r.Form.Get("email")
 	paymentIntent := r.Form.Get("payment_intent")
 	paymentMethod := r.Form.Get("payment_method")
 	paymentAmount := r.Form.Get("payment_amount")
 	paymentCurrency := r.Form.Get("payment_currency")
+	amount, detailedErr := convertAtoi(paymentAmount)
+	if detailedErr != nil {
+		app.errorLog.Println("failed to convert string to int:\n ", detailedErr)
+		return txData, err
+	}
 
 	card := cards.Card{
 		Secret: app.config.stripe.secret,
@@ -60,40 +81,145 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		app.infoLog.Println(" ::ERROR failed to retrive payment intent")
 		app.errorLog.Println(err)
-		return
+		return txData, err
 	}
 
 	pm, err := card.GetPaymentMethod(paymentMethod)
 	if err != nil {
-		app.infoLog.Println(" ::ERROR failed to get payment method")
-		app.errorLog.Println(err)
-		return
+		app.errorLog.Println("failed to get payment method, due to: \n", err)
+		return txData, err
 	}
 
 	lastFour := pm.Card.Last4
 	expiryMonth := pm.Card.ExpMonth
 	expiryYear := pm.Card.ExpYear
+	bankReturnCode := pi.Charges.Data[0].ID
 
-	//create new customer
+	txData = TransactionData{
+		FirstName:       customerFirstName,
+		LastName:        customerLastName,
+		CardHolder:      cardHolder,
+		Email:           email,
+		PaymentIntentID: paymentIntent,
+		PaymentMethodID: paymentMethod,
+		Amount:          amount,
+		PaymentCurrency: paymentCurrency,
+		LastFour:        lastFour,
+		ExpiryMonth:     int(expiryMonth), // convert uint64 to int
+		ExpiryYear:      int(expiryYear),  // convert uint64 to int
+		BankReturnCode:  bankReturnCode,
+	}
+
+	return txData, nil
+}
+
+// PaymentSucceeded displays the receipt page
+func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request) {
+	app.infoLog.Println("Hit PaymentSucceeded Handler")
+
+	if app.Session.Get(r.Context(), "receipt") != nil {
+		app.infoLog.Println(" ::The form re-submitted - aborting....")
+		http.Redirect(w, r, "/receipt", http.StatusSeeOther)
+		return
+	}
+
+	err := r.ParseForm()
+	if err != nil {
+		app.errorLog.Println(err)
+		return
+	}
+
+	// get transaction data
+	txData, err := app.GetTransactionData(r)
+	if err != nil {
+		app.errorLog.Println(err)
+		return
+	}
+	// read posted data
+	widgetId, detailedErr := convertAtoi(r.Form.Get("product_id"))
+	requestId := r.Form.Get("request_id")
+
+	if detailedErr != nil {
+		app.errorLog.Println("failed to convert string to int:\n ", detailedErr)
+		return
+	}
+
+	// check if there is a re-submit of the form with the same requestId
+	tables := models.NewModels(app.DB.DB)
+	id, err := tables.DB.GetOrderByRequestId(requestId)
+	if err != nil && id > -1 {
+		app.infoLog.Println(" ::The form re-submitted - aborting....")
+		return
+	}
+	//} else if err != nil && strings.Contains(err.Error(), "sql: no rows") {
+	//	// excludes 'sql: no rows in result set'
+	//	app.errorLog.Println("failed to get orders from DB due to:\n ", err)
+	//}
+
+	// create new customer
+	customerID, customerSqlErr := app.SaveCustomer(txData.FirstName, txData.LastName, txData.Email)
+	if customerSqlErr != nil {
+		app.errorLog.Println("failed to save customer to DB due to:\n ", customerSqlErr)
+	}
+
+	app.infoLog.Println("customer has been created with ID: ", customerID)
+
 	// create new transaction
-	// create new order
+	if customerSqlErr == nil {
+		txn := models.Transaction{
+			Amount:              txData.Amount,
+			Currency:            txData.PaymentCurrency,
+			LastFour:            txData.LastFour,
+			ExpiryMonth:         txData.ExpiryMonth,
+			ExpiryYear:          txData.ExpiryYear,
+			BankReturnCode:      txData.BankReturnCode,
+			PaymentIntent:       txData.PaymentIntentID,
+			PaymentMethod:       txData.PaymentMethodID,
+			TransactionStatusID: 2, //CLEARED,
+		}
+
+		txnID, err := app.SaveTxn(txn)
+		if err != nil {
+			app.errorLog.Println("failed to save transaction to DB due to:\n ", err)
+			return
+		}
+		app.infoLog.Println("transaction has been created with ID: ", txnID)
+
+		// create new order
+		orderID, err := app.SaveOrder(
+			widgetId,
+			txnID,
+			customerID,
+			1, // CLEARED
+			1, // WE allow only 1 quantity at this time
+			txData.Amount,
+			requestId,
+		)
+		if err != nil {
+			app.errorLog.Println("failed to save order to DB due to:\n ", err)
+		}
+		app.infoLog.Println("order has been created with ID: ", orderID)
+
+		// write this data to session, and then redirect user to new page?
+		app.Session.Put(r.Context(), "receipt", txData)
+		http.Redirect(w, r, "/receipt", http.StatusSeeOther)
+		return
+	}
+
+	http.Error(w, "PaymentSucceeded, failed to generate Receipt - but your order is save with us, some one will reach you out soon", http.StatusInternalServerError)
+	return
+}
+
+func (app *application) Receipt(w http.ResponseWriter, r *http.Request) {
+	app.infoLog.Println("Hit Receipt Handler")
+
+	txn := app.Session.Get(r.Context(), "receipt").(TransactionData)
+	app.Session.Remove(r.Context(), "receipt")
 
 	data := make(map[string]interface{})
-	data["cardholder"] = cardHolder
-	data["email"] = email
-	data["pi"] = paymentIntent
-	data["pm"] = paymentMethod
-	data["pa"] = paymentAmount
-	data["pc"] = paymentCurrency
+	data["txn"] = txn
 
-	data["last_four"] = lastFour
-	data["expiry_month"] = expiryMonth
-	data["expiry_year"] = expiryYear
-	data["bank_return_code"] = pi.Charges.Data[0].ID // bank return code
-
-	// should write this data to session, and then redirect user to new page?
-
-	if err := app.renderTemplate(w, r, "succeeded", &templateData{
+	if err := app.renderTemplate(w, r, "receipt", &templateData{
 		Data: data,
 	}); err != nil {
 		app.errorLog.Println(err)
@@ -116,12 +242,80 @@ func (app *application) WidgetById(w http.ResponseWriter, r *http.Request) {
 
 	data := make(map[string]interface{})
 	data["widget"] = widget
-
-	err := app.renderTemplate(w, r, "buy-once", &templateData{
+	app.debugLog.Println("widget.Price ", widget.Price)
+	err := app.renderTemplate(w, r, "single-widget", &templateData{
 		Data: data,
-	}, "stripe-js")
+	}, "stripe-js", "common-js")
 	if err != nil {
 		app.errorLog.Println(err)
 	}
 
+}
+
+func (app *application) SaveCustomer(firstName string, lastName string, email string) (int, error) {
+	customer := models.Customer{
+		FirstName: firstName,
+		LastName:  lastName,
+		Email:     email,
+	}
+
+	tables := models.NewModels(app.DB.DB)
+	id, err := tables.DB.InsertCustomer(customer)
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
+func (app *application) SaveTxn(txn models.Transaction) (int, error) {
+
+	tables := models.NewModels(app.DB.DB)
+	id, err := tables.DB.InsertTransaction(txn)
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
+func (app *application) SaveOrder(widgetId int,
+	transactionId int,
+	customerId int,
+	statusId int,
+	quantity int,
+	amount int,
+	requestId string,
+) (int, error) {
+
+	ordr := models.Order{
+		WidgetID:      widgetId,
+		TransactionID: transactionId,
+		CustomerID:    customerId,
+		StatusID:      statusId,
+		Quantity:      quantity,
+		Amount:        amount,
+		RequestID:     requestId,
+	}
+
+	tables := models.NewModels(app.DB.DB)
+	id, err := tables.DB.InsertOrder(ordr)
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
+func convertAtoi(n string) (int, error) {
+	res, err := strconv.Atoi(n)
+	if err != nil {
+		detailedErr := &strconv.NumError{
+			Num:  n,
+			Err:  err,
+			Func: "Atoi",
+		}
+		return 0, detailedErr
+	}
+	return res, nil
 }

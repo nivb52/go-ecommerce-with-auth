@@ -24,18 +24,21 @@ CREATE TABLE IF NOT EXISTS orders (
 
     transaction_id INTEGER NOT NULL,
     CONSTRAINT `FK_order_transaction_id`
-    FOREIGN  KEY (transaction_id) REFERENCES transactions(id) 
-        ON DELETE SET NULL ON UPDATE NO ACTION, 
+    FOREIGN  KEY (transaction_id) REFERENCES transactions(id),
 
     status_id INTEGER NOT NULL,
-    CONSTRAINT `FK_order_transaction_id`
-    FOREIGN  KEY (status_id) REFERENCES statuses(id) 
-        ON DELETE SET NULL  ON UPDATE NO ACTION,
+    FOREIGN  KEY (status_id) REFERENCES statuses(id),
 
+    customer_id INTEGER NOT NULL,
     quantity INTEGER,
     amount INTEGER,
+    request_id VARCHAR(255),
 
-    created_at TIMESTAMP DEFAULT NOT NULL CURRENT_TIMESTAMP,    
-    updated_at TIMESTAMP ON UPDATE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+ALTER TABLE orders ADD INDEX request_id_index (request_id);
+ALTER TABLE orders ADD INDEX customer_id_index (customer_id);
+ALTER TABLE orders ADD INDEX status_id_index (status_id);
 

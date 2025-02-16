@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     currency VARCHAR(6),
     last_four VARCHAR(4),
     bank_return_code VARCHAR(255),
-    -- transaction_status_id FOREIGN  KEY TO transaction table
+    -- transaction_status_id FOREIGN  KEY TO transactions table
     transaction_status_id INTEGER,
      CONSTRAINT `FK_transactions_transaction_status_id` 
     FOREIGN KEY (transaction_status_id) REFERENCES transaction_statuses(id) 
