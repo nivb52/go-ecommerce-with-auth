@@ -82,7 +82,7 @@ func main() {
 	conn, connErr := driver.OpenDB(cfg.db.dsn)
 	if connErr != nil {
 		fmt.Printf("ENV: DSN_API: %s \n", os.Getenv("DSN_API"))
-		log.Fatal(":: DB connecition Failed! Exiting")
+		log.Fatal(":: DB connection Failed! Exiting")
 	}
 	defer conn.Close()
 
