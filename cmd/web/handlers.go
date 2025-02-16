@@ -141,8 +141,8 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 	// check if there is a re-submit of the form with the same requestId
 	tables := models.NewModels(app.DB.DB)
 	id, err := tables.DB.GetOrderByRequestId(requestId)
-	if err != nil && id != 0 {
-		app.infoLog.Println(" ::The form re-submited - abourting....")
+	if err != nil && id > -1 {
+		app.infoLog.Println(" ::The form re-submitted - aborting....")
 		return
 	}
 

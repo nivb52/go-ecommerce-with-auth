@@ -259,17 +259,14 @@ func (m *DBModel) GetOrderByRequestId(requestId string) (int, error) {
 	defer cancel()
 
 	var ordr Order
-	query := `SELECT 
-		id 
-		FROM orders 
-		WHERE requestId = ?`
+	query := `SELECT id FROM orders WHERE request_id = ?`
 	row := m.DB.QueryRowContext(ctx, query, requestId)
 	err := row.Scan(
 		&ordr.ID,
 	)
 
 	if err != nil {
-		return 0, err
+		return -1, err
 	}
 
 	return ordr.ID, nil
