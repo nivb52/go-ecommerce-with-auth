@@ -1,14 +1,14 @@
 package main
 
 import (
+	"encoding/gob"
 	"encoding/json"
+	"github.com/go-chi/chi/v5"
 	"go-ecommerce-with-auth/internal/cards"
 	"go-ecommerce-with-auth/internal/models"
 	"net/http"
 	"os"
 	"strconv"
-
-	"github.com/go-chi/chi/v5"
 )
 
 func (app *application) Liveness(w http.ResponseWriter, r *http.Request) {
@@ -57,7 +57,7 @@ func (app *application) GetTransactionData(r *http.Request) (TransactionData, er
 		app.errorLog.Println(err)
 		return txData, err
 	}
-
+	gob.Register(TransactionData{})
 	// read posted data
 	customerFirstName := r.Form.Get("first_name")
 	customerLastName := r.Form.Get("last_name")
@@ -117,6 +117,12 @@ func (app *application) GetTransactionData(r *http.Request) (TransactionData, er
 func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request) {
 	app.infoLog.Println("Hit PaymentSucceeded Handler")
 
+	if app.Session.Get(r.Context(), "receipt") != nil {
+		app.infoLog.Println(" ::The form re-submitted - aborting....")
+		http.Redirect(w, r, "/receipt", http.StatusSeeOther)
+		return
+	}
+
 	err := r.ParseForm()
 	if err != nil {
 		app.errorLog.Println(err)
@@ -145,13 +151,17 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 		app.infoLog.Println(" ::The form re-submitted - aborting....")
 		return
 	}
+	//} else if err != nil && strings.Contains(err.Error(), "sql: no rows") {
+	//	// excludes 'sql: no rows in result set'
+	//	app.errorLog.Println("failed to get orders from DB due to:\n ", err)
+	//}
 
 	// create new customer
 	customerID, customerSqlErr := app.SaveCustomer(txData.FirstName, txData.LastName, txData.Email)
-	if err != nil {
+	if customerSqlErr != nil {
 		app.errorLog.Println("failed to save customer to DB due to:\n ", customerSqlErr)
-
 	}
+
 	app.infoLog.Println("customer has been created with ID: ", customerID)
 
 	// create new transaction
@@ -189,27 +199,14 @@ func (app *application) PaymentSucceeded(w http.ResponseWriter, r *http.Request)
 			app.errorLog.Println("failed to save order to DB due to:\n ", err)
 		}
 		app.infoLog.Println("order has been created with ID: ", orderID)
+
+		// write this data to session, and then redirect user to new page?
+		app.Session.Put(r.Context(), "receipt", txData)
+		http.Redirect(w, r, "/receipt", http.StatusSeeOther)
+		return
 	}
 
-	//data := make(map[string]interface{})
-	//data["email"] = txData.Email
-	//data["first_name"] = txData.FirstName
-	//data["last_name"] = txData.LastName
-	//
-	//data["cardholder"] = txData.CardHolder
-	//data["pi"] = txData.PaymentIntentID
-	//data["pm"] = txData.PaymentMethodID
-	//data["pa"] = txData.Amount
-	//data["pc"] = txData.PaymentCurrency
-	//
-	//data["last_four"] = txData.LastFour
-	//data["expiry_month"] = txData.ExpiryMonth
-	//data["expiry_year"] = txData.ExpiryYear
-	//data["bank_return_code"] = txData.BankReturnCode
-
-	// write this data to session, and then redirect user to new page?
-	app.Session.Put(r.Context(), "receipt", txData)
-	http.Redirect(w, r, "/receipt", http.StatusOK)
+	http.Error(w, "PaymentSucceeded, failed to generate Receipt - but your order is save with us, some one will reach you out soon", http.StatusInternalServerError)
 	return
 }
 
@@ -222,7 +219,7 @@ func (app *application) Receipt(w http.ResponseWriter, r *http.Request) {
 	data := make(map[string]interface{})
 	data["txn"] = txn
 
-	if err := app.renderTemplate(w, r, "succeeded", &templateData{
+	if err := app.renderTemplate(w, r, "receipt", &templateData{
 		Data: data,
 	}); err != nil {
 		app.errorLog.Println(err)
